@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/tomark/Downloads/ml-agents-develop/Project/Assets/ML-Agents/Examples/SharedAssets/Meshes/**)",
+      "Read(//c/Users/tomark/Downloads/ml-agents-develop/Project/Assets/ML-Agents/Examples/SharedAssets/Materials/**)",
+      "Read(//c/Users/tomark/Downloads/ml-agents-develop/Project/Assets/ML-Agents/Examples/SharedAssets/Prefabs/**)",
+      "Bash(grep:*)",
+      "Read(//c/Users/tomark/Pictures/Screenshots/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
