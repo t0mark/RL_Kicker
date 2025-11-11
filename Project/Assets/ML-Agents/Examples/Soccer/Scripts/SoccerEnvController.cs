@@ -46,6 +46,16 @@ public class SoccerEnvController : MonoBehaviour
 
     private int m_ResetTimer;
 
+    public static System.Action<int, int> OnScoreChanged;
+    private int m_BlueScore;
+    private int m_PurpleScore;
+    public int BlueScore => m_BlueScore;
+    public int PurpleScore => m_PurpleScore;
+    void RaiseScoreChanged()
+    {
+        OnScoreChanged?.Invoke(m_BlueScore, m_PurpleScore);
+    }
+
     void Start()
     {
 
@@ -101,11 +111,15 @@ public class SoccerEnvController : MonoBehaviour
         {
             m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_PurpleAgentGroup.AddGroupReward(-1);
+            m_BlueScore++;
+            RaiseScoreChanged();
         }
         else
         {
             m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_BlueAgentGroup.AddGroupReward(-1);
+            m_PurpleScore++;
+            RaiseScoreChanged();
         }
         m_PurpleAgentGroup.EndGroupEpisode();
         m_BlueAgentGroup.EndGroupEpisode();

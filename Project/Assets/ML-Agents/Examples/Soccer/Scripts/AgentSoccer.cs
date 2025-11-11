@@ -48,6 +48,8 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    public bool manualOverride = false;
+
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -145,7 +147,7 @@ public class AgentSoccer : Agent
     public override void OnActionReceived(ActionBuffers actionBuffers)
 
     {
-
+        if (manualOverride) return;
         if (position == Position.Goalie)
         {
             // Existential bonus for Goalies.
