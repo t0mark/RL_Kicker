@@ -22,6 +22,7 @@ public class AgentSoccer : Agent
     public enum Position
     {
         Striker,
+        Defender,
         Goalie,
         Generic
     }
@@ -37,6 +38,37 @@ public class AgentSoccer : Agent
     float m_Existential;
     float m_LateralSpeed;
     float m_ForwardSpeed;
+    SoccerEnvController m_EnvController;
+    Transform m_OwnGoal;
+
+    [Header("Role Settings")]
+    [SerializeField]
+    float m_GoalieExistentialRewardScale = 1f;
+
+    [SerializeField]
+    float m_StrikerExistentialPenaltyScale = 1f;
+
+    [Header("Defender Role Settings")]
+    [SerializeField]
+    float m_DefenderExistentialBonus = 0.5f;
+
+    [SerializeField]
+    float m_DefenderAlignmentWeight = 0.6f;
+
+    [SerializeField]
+    float m_DefenderDistanceWeight = 0.4f;
+
+    [SerializeField]
+    float m_DefenderShapeRewardScale = 0.02f;
+
+    [SerializeField]
+    float m_DefenderOptimalDistanceRatio = 0.55f;
+
+    [SerializeField]
+    float m_DefenderMinDistance = 4f;
+
+    [SerializeField]
+    float m_DefenderOutOfPositionPenalty = 0.02f;
 
 
     [HideInInspector]
@@ -50,10 +82,10 @@ public class AgentSoccer : Agent
 
     public override void Initialize()
     {
-        SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
-        if (envController != null)
+        m_EnvController = GetComponentInParent<SoccerEnvController>();
+        if (m_EnvController != null)
         {
-            m_Existential = 1f / envController.MaxEnvironmentSteps;
+            m_Existential = 1f / m_EnvController.MaxEnvironmentSteps;
         }
         else
         {
@@ -73,6 +105,7 @@ public class AgentSoccer : Agent
             initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
             rotSign = -1f;
         }
+        CacheGoalReference();
         if (position == Position.Goalie)
         {
             m_LateralSpeed = 1.0f;
@@ -82,6 +115,11 @@ public class AgentSoccer : Agent
         {
             m_LateralSpeed = 0.3f;
             m_ForwardSpeed = 1.3f;
+        }
+        else if (position == Position.Defender)
+        {
+            m_LateralSpeed = 0.7f;
+            m_ForwardSpeed = 1.1f;
         }
         else
         {
@@ -149,12 +187,17 @@ public class AgentSoccer : Agent
         if (position == Position.Goalie)
         {
             // Existential bonus for Goalies.
-            AddReward(m_Existential);
+            AddReward(m_Existential * m_GoalieExistentialRewardScale);
         }
         else if (position == Position.Striker)
         {
             // Existential penalty for Strikers
-            AddReward(-m_Existential);
+            AddReward(-m_Existential * m_StrikerExistentialPenaltyScale);
+        }
+        else if (position == Position.Defender)
+        {
+            AddReward(m_Existential * m_DefenderExistentialBonus);
+            AddReward(ComputeDefenderShapeReward());
         }
         MoveAgent(actionBuffers.DiscreteActions);
     }
@@ -212,6 +255,71 @@ public class AgentSoccer : Agent
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+        CacheGoalReference();
     }
 
+    void CacheGoalReference()
+    {
+        if (m_EnvController == null)
+        {
+            m_EnvController = GetComponentInParent<SoccerEnvController>();
+        }
+        if (m_EnvController != null)
+        {
+            m_OwnGoal = m_EnvController.GetGoalTransform(team);
+        }
+    }
+
+    float ComputeDefenderShapeReward()
+    {
+        if (m_EnvController == null)
+        {
+            return 0f;
+        }
+
+        var goal = m_OwnGoal;
+        if (goal == null)
+        {
+            CacheGoalReference();
+            goal = m_OwnGoal;
+            if (goal == null)
+            {
+                return 0f;
+            }
+        }
+
+        var ballTransform = m_EnvController.BallTransform;
+        if (ballTransform == null)
+        {
+            return 0f;
+        }
+
+        var goalToBall = ballTransform.position - goal.position;
+        var goalToAgent = transform.position - goal.position;
+
+        if (goalToBall.sqrMagnitude < 0.01f || goalToAgent.sqrMagnitude < 0.01f)
+        {
+            return 0f;
+        }
+
+        var alignment = Mathf.Clamp01(Vector3.Dot(goalToAgent.normalized, goalToBall.normalized));
+
+        var targetDistance = Mathf.Clamp(goalToBall.magnitude * m_DefenderOptimalDistanceRatio,
+            m_DefenderMinDistance, m_EnvController.DefensiveShellRadius);
+
+        var distanceError = Mathf.Abs(goalToAgent.magnitude - targetDistance);
+        var distanceReward = Mathf.Clamp01(1f - distanceError / Mathf.Max(targetDistance, 0.001f));
+
+        var shapeReward = (alignment * m_DefenderAlignmentWeight) +
+                          (distanceReward * m_DefenderDistanceWeight);
+
+        shapeReward *= m_DefenderShapeRewardScale;
+
+        if (goalToAgent.magnitude > m_EnvController.DefensiveMaxRadius)
+        {
+            shapeReward -= m_DefenderOutOfPositionPenalty;
+        }
+
+        return shapeReward;
+    }
 }

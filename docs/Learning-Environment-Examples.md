@@ -307,6 +307,27 @@ you would like to contribute environments, please see our
     - Recommended minimum: 6
     - Recommended maximum: 20
 
+## Soccer Fives
+
+- Set-up: Extension of SoccerTwos where ten agents play a 5 vs 5 match on a full-width pitch.
+- Goal:
+  - Attackers: Create scoring opportunities while coordinating with defenders and the goalkeeper.
+  - Defenders: Hold the defensive shell between the ball and their own goal while contesting possession.
+  - Goalkeeper: Protect the enlarged goal area from shots on target.
+- Agents: Two `SimpleMultiAgentGroup` instances with five agents each (two attackers, two defenders, one goalkeeper). Roles are assigned through the `AgentSoccer.Position` enum.
+- Agent Reward Function (dependent):
+  - Team rewards identical to SoccerTwos (+1/-1 on goals, time penalty), plus role-specific bonuses:
+    - Goalkeepers retain their existential reward.
+    - Strikers retain their existential penalty.
+    - Defenders receive a shaping reward to hold the optimal distance/alignment from their own goal and are penalized for leaving the defensive zone.
+- Behavior Parameters:
+  - Same observation and action specification as SoccerTwos; defender logic is implemented in `AgentSoccer`.
+  - Attach `SoccerFiveConfiguration` and `SoccerFiveFormationAuthoring` (located in `Project/Assets/ML-Agents/Examples/Soccer/Scripts/FiveVsFive`) to the Soccer environment root to enlarge the field, randomization ranges, and auto-place the five-per-team formation on reset.
+- Float Properties:
+  - Field dimensions and spawn jitter can be tuned at runtime through the configuration components without opening the Unity scene.
+- Training:
+  - Use `config/poca/SoccerFives.yaml` and run `mlagents-learn config/poca/SoccerFives.yaml --run-id=Soccer5v5`.
+
 ## Strikers Vs. Goalie
 
 ![StrikersVsGoalie](images/strikersvsgoalie.png)

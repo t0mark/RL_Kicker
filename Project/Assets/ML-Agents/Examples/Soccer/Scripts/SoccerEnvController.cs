@@ -38,6 +38,38 @@ public class SoccerEnvController : MonoBehaviour
     //List of Agents On Platform
     public List<PlayerInfo> AgentsList = new List<PlayerInfo>();
 
+    [Header("Field Configuration")]
+    [Tooltip("Half size of the playable field (x = length, y = width).")]
+    [SerializeField]
+    Vector2 m_FieldHalfSize = new Vector2(12f, 8f);
+
+    [Tooltip("Random spawn jitter applied to agents on reset (x = length, y = width).")]
+    [SerializeField]
+    Vector2 m_PlayerSpawnJitter = new Vector2(5f, 0f);
+
+    [Tooltip("Random spawn jitter applied to the ball on reset (x = length, y = width).")]
+    [SerializeField]
+    Vector2 m_BallSpawnJitter = new Vector2(2.5f, 2.5f);
+
+    [Tooltip("Preferred radius (from own goal) for defenders to hold their shape.")]
+    [SerializeField]
+    float m_DefensiveShellRadius = 9f;
+
+    [Tooltip("Maximum radius (from own goal) defenders are allowed before receiving penalties.")]
+    [SerializeField]
+    float m_DefensiveMaxRadius = 14f;
+
+    [Header("Scene References")]
+    [SerializeField]
+    Transform m_BlueGoal;
+
+    [SerializeField]
+    Transform m_PurpleGoal;
+
+    [Tooltip("Automatically collect AgentSoccer instances from children when the list is empty.")]
+    [SerializeField]
+    bool m_AutoPopulateAgents = true;
+
     private SoccerSettings m_SoccerSettings;
 
 
@@ -46,8 +78,9 @@ public class SoccerEnvController : MonoBehaviour
 
     private int m_ResetTimer;
 
-    void Start()
+    protected virtual void Start()
     {
+        EnsureAgentsList();
 
         m_SoccerSettings = FindFirstObjectByType<SoccerSettings>();
         // Initialize TeamManager
@@ -55,6 +88,7 @@ public class SoccerEnvController : MonoBehaviour
         m_PurpleAgentGroup = new SimpleMultiAgentGroup();
         ballRb = ball.GetComponent<Rigidbody>();
         m_BallStartingPos = new Vector3(ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+        CacheGoalReferences();
         foreach (var item in AgentsList)
         {
             item.StartingPos = item.Agent.transform.position;
@@ -84,10 +118,10 @@ public class SoccerEnvController : MonoBehaviour
     }
 
 
-    public void ResetBall()
+    public virtual void ResetBall()
     {
-        var randomPosX = Random.Range(-2.5f, 2.5f);
-        var randomPosZ = Random.Range(-2.5f, 2.5f);
+        var randomPosX = Random.Range(-m_BallSpawnJitter.x, m_BallSpawnJitter.x);
+        var randomPosZ = Random.Range(-m_BallSpawnJitter.y, m_BallSpawnJitter.y);
 
         ball.transform.position = m_BallStartingPos + new Vector3(randomPosX, 0f, randomPosZ);
         ballRb.linearVelocity = Vector3.zero;
@@ -95,7 +129,7 @@ public class SoccerEnvController : MonoBehaviour
 
     }
 
-    public void GoalTouched(Team scoredTeam)
+    public virtual void GoalTouched(Team scoredTeam)
     {
         if (scoredTeam == Team.Blue)
         {
@@ -114,17 +148,15 @@ public class SoccerEnvController : MonoBehaviour
     }
 
 
-    public void ResetScene()
+    public virtual void ResetScene()
     {
         m_ResetTimer = 0;
 
         //Reset Agents
         foreach (var item in AgentsList)
         {
-            var randomPosX = Random.Range(-5f, 5f);
-            var newStartPos = item.Agent.initialPos + new Vector3(randomPosX, 0f, 0f);
-            var rot = item.Agent.rotSign * Random.Range(80.0f, 100.0f);
-            var newRot = Quaternion.Euler(0, rot, 0);
+            var newStartPos = GetSpawnPosition(item);
+            var newRot = GetSpawnRotation(item);
             item.Agent.transform.SetPositionAndRotation(newStartPos, newRot);
 
             item.Rb.linearVelocity = Vector3.zero;
@@ -133,5 +165,107 @@ public class SoccerEnvController : MonoBehaviour
 
         //Reset Ball
         ResetBall();
+    }
+
+    protected virtual Vector3 GetSpawnPosition(PlayerInfo player)
+    {
+        var randomPosX = Random.Range(-m_PlayerSpawnJitter.x, m_PlayerSpawnJitter.x);
+        var randomPosZ = Random.Range(-m_PlayerSpawnJitter.y, m_PlayerSpawnJitter.y);
+        return player.Agent.initialPos + new Vector3(randomPosX, 0f, randomPosZ);
+    }
+
+    protected virtual Quaternion GetSpawnRotation(PlayerInfo player)
+    {
+        var rot = player.Agent.rotSign * Random.Range(80.0f, 100.0f);
+        return Quaternion.Euler(0, rot, 0);
+    }
+
+    void CacheGoalReferences()
+    {
+        if (m_BlueGoal == null)
+        {
+            var goal = GameObject.FindGameObjectWithTag("blueGoal");
+            if (goal != null)
+            {
+                m_BlueGoal = goal.transform;
+            }
+        }
+        if (m_PurpleGoal == null)
+        {
+            var goal = GameObject.FindGameObjectWithTag("purpleGoal");
+            if (goal != null)
+            {
+                m_PurpleGoal = goal.transform;
+            }
+        }
+    }
+
+    public Transform GetGoalTransform(Team team)
+    {
+        return team == Team.Blue ? m_BlueGoal : m_PurpleGoal;
+    }
+
+    public Transform BallTransform => ball != null ? ball.transform : null;
+
+    public Vector2 FieldHalfSize => m_FieldHalfSize;
+    public Vector2 PlayerSpawnJitter => m_PlayerSpawnJitter;
+    public Vector2 BallSpawnJitter => m_BallSpawnJitter;
+    public float DefensiveShellRadius => m_DefensiveShellRadius;
+    public float DefensiveMaxRadius => m_DefensiveMaxRadius;
+    public IReadOnlyList<PlayerInfo> Players => AgentsList;
+
+    public void SetFieldHalfSize(Vector2 halfSize)
+    {
+        m_FieldHalfSize = halfSize;
+    }
+
+    public void SetPlayerSpawnJitter(Vector2 jitter)
+    {
+        m_PlayerSpawnJitter = jitter;
+    }
+
+    public void SetBallSpawnJitter(Vector2 jitter)
+    {
+        m_BallSpawnJitter = jitter;
+    }
+
+    public void SetDefensiveRadii(float shellRadius, float maxRadius)
+    {
+        m_DefensiveShellRadius = shellRadius;
+        m_DefensiveMaxRadius = Mathf.Max(shellRadius, maxRadius);
+    }
+
+    public void EnsureAgentsList()
+    {
+        if (!m_AutoPopulateAgents)
+        {
+            return;
+        }
+
+        AgentsList.RemoveAll(info => info == null || info.Agent == null);
+        PopulateAgentsFromChildren();
+    }
+
+    void PopulateAgentsFromChildren()
+    {
+        if (!m_AutoPopulateAgents)
+        {
+            return;
+        }
+
+        var foundAgents = GetComponentsInChildren<AgentSoccer>(true);
+        foreach (var agent in foundAgents)
+        {
+            var alreadyRegistered = AgentsList.Exists(info => info.Agent == agent);
+            if (alreadyRegistered)
+            {
+                continue;
+            }
+
+            AgentsList.Add(new PlayerInfo
+            {
+                Agent = agent
+            });
+        }
     }
 }
