@@ -6,37 +6,21 @@ site_description: "DEPRECATED: This documentation has been moved to the Unity Pa
 site_author: Unity Technologies
 copyright: com.unity.ml-agents copyright © 2017 - 2022 Unity Technologies
 nav:
-- "⚠️ DOCUMENTATION MOVED": index.md
-- ML-Agents Overview: ML-Agents-Overview.md
-- Installation: Installation.md
-- Toolkit Documentation: ML-Agents-Toolkit-Documentation.md
-- Background:
-    - Machine Learning: Background-Machine-Learning.md
-    - PyTorch: Background-PyTorch.md
-    - Unity: Background-Unity.md
-    - ELO: ELO-Rating-System.md
-- Interfacing with Unity Builds:
-    - Getting started with the Gym API: Python-Gym-API.md
-    - Getting started with the PettingZoo API: Python-PettingZoo-API.md
-    - Getting started with the LLAPI: Python-LLAPI.md
-- Python API Docs:
-    - Gym API Documentation: Python-Gym-API-Documentation.md
-    - Petting Zoo Documentation: Python-PettingZoo-API-Documentation.md
-    - LLAPI Documentation: Python-LLAPI-Documentation.md
-    - On/Off Policy Trainer: Python-On-Off-Policy-Trainer-Documentation.md
-- Tutorials:
-    - Customizing Training via Plugins: Training-Plugins.md
-    - Custom Trainer Plugin: Tutorial-Custom-Trainer-Plugin.md
-    - HuggingFace: Hugging-Face-Integration.md
-- About:
-    - FAQs: FAQ.md
-    - Limitations: Limitations.md
-    - Migrating: Migrating.md
-    - Versioning: Versioning.md
+- "개요": index.md
+- "설치":
+    - "설치 (Mac/Linux)": Installation.md
+    - "설치 (Windows/Anaconda)": Installation-Anaconda-Windows.md
+- "환경 설계": Learning-Environment-Guide.md
+- "훈련":
+    - "훈련 워크플로": Training-ML-Agents.md
+    - "YAML 설정": Training-Configuration-File.md
+    - "PPO 가이드": Training-PPO.md
+    - "모방 학습": Training-Imitation-Learning.md
+- "인프라":
+    - "Docker 사용": Using-Docker.md
+- "FAQ": FAQ.md
 theme:
   name: material
-  logo: images/unity-logo.png
-  favicon: images/unity-logo-black.png
   palette:
     - primary: blue
     - accent: light blue

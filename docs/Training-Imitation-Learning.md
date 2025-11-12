@@ -9,7 +9,6 @@
 에이전트의 플레이 데이터를 기록하기 위해서는 씬(Scene)에서 `Agent` 컴포넌트를 포함하고 있는 GameObject에 `Demonstration Recorder` 컴포넌트를 추가해주어야 합니다. 일단 추가되고나면 에이전트로부터 플레이 데이터를 기록할 수 있게 됩니다.
 
 <p align="center">
-  <img src="images/demo_component.png"
        alt="BC Teacher Helper"
        width="375" border="10" />
 </p>
@@ -17,7 +16,6 @@
 `Record`가 체크되는 경우 씬이 실행되면 데이터가 생성됩니다. 환경의 난이도에 따라 모방학습에 사용하기 위해 몇분에서 몇시간 정도 플레이 데이터를 수집해야합니다. 충분한 데이터가 기록되었으면 유니티 상에서 게임의 실행을 정지합니다. 그렇게 하면 `.demo` 파일이 `Assets/Demonstations` 폴더 내부에 생성됩니다. 이 파일에는 에이전트의 플레이 데이터가 저장되어 있습니다. 이 파일을 클릭하면 인스펙터 상에 데모 파일에 대한 정보를 아래와 같이 알려줍니다.
 
 <p align="center">
-  <img src="images/demo_inspector.png"
        alt="BC Teacher Helper"
        width="375" border="10" />
 </p>
@@ -68,7 +66,6 @@ without pre-recording a demonstration file. The steps to do this are as follows:
 더 편리한 사용을 위해서, `BC Teacher Helper` 컴포넌트를 선생님 에이전트에 사용할 수 있습니다.
 
 <p align="center">
-  <img src="images/bc_teacher_helper.png"
        alt="BC Teacher Helper"
        width="375" border="10" />
 </p>

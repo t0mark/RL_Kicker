@@ -1,65 +1,49 @@
-# Installing ML-Agents Toolkit for Windows (Deprecated)
+# Windows ����ڸ� ���� ML-Agents Toolkit ��ġ ���
 
-:warning: **Note:** We no longer use this guide ourselves and so it may not work
-correctly. We've decided to keep it up just in case it is helpful to you.
+ML-Agents toolkit�� Windows 10�� �����մϴ�. �ٸ� ������ Windows ���ε� ML-Agents toolkit��
+����� �� ������ �������� �ʾҽ��ϴ�. ����, ML-Agents toolkit�� Windows VM(Bootcamp �Ǵ� ���� ó��
+ȯ�� ����)�� ��� ���� �������� �ʾҽ��ϴ� .
 
-The ML-Agents Toolkit supports Windows 10. While it might be possible to run the
-ML-Agents Toolkit using other versions of Windows, it has not been tested on
-other versions. Furthermore, the ML-Agents Toolkit has not been tested on a
-Windows VM such as Bootcamp or Parallels.
+ML-Agents toolkit�� ����ϱ� ����, �Ʒ��� ����Ȱ� ó�� Python�� �䱸�Ǵ� Python ��Ű���� ��ġ�ؾ� �մϴ�.
+�� ���̵�� ���� GPU ��� �н�(�����ڸ� ����)�� ���� ���� ����� �ٷ�ϴ�.
+����, ML-Agents toolkit�� ���� GPU ��� �н��� �ʿ����� ������ ���� ���� �Ǵ� Ư�� ���׿� �ʿ��� �� �ֽ��ϴ�.
 
-To use the ML-Agents Toolkit, you install Python and the required Python
-packages as outlined below. This guide also covers how set up GPU-based training
-(for advanced users). GPU-based training is not currently required for the
-ML-Agents Toolkit. However, training on a GPU might be required by future
-versions and features.
+## �ܰ� 1: Anaconda�� ���� Python ��ġ
 
-## Step 1: Install Python via Anaconda
-
-[Download](https://www.anaconda.com/download/#windows) and install Anaconda for
-Windows. By using Anaconda, you can manage separate environments for different
-distributions of Python. Python 3.7.2 or higher is required as we no longer
-support Python 2. In this guide, we are using Python version 3.7 and Anaconda
-version 5.1
+Windows ������ Anaconda�� [�ٿ�ε�](https://www.anaconda.com/download/#windows)�ϰ� ��ġ�Ͻʽÿ�.
+Anaconda�� ��������ν�, �ٸ� ���� ������ Python�� �и��� ȯ�濡�� ������ �� �ֽ��ϴ�.
+Python 2�� ���̻� �������� �ʱ� ������ Python 3.10�� �ʿ��մϴ�. �� ���̵忡�� �츮��
+Python 3.10.12 ������ Anaconda 5.1 ������ ����� ���Դϴ�.
 ([64-bit](https://repo.continuum.io/archive/Anaconda3-5.1.0-Windows-x86_64.exe)
-or [32-bit](https://repo.continuum.io/archive/Anaconda3-5.1.0-Windows-x86.exe)
-direct links).
+�Ǵ� [32-bit](https://repo.continuum.io/archive/Anaconda3-5.1.0-Windows-x86.exe)
+��ũ).
 
 <p align="center">
-  <img src="images/anaconda_install.PNG"
        alt="Anaconda Install"
        width="500" border="10" />
 </p>
 
-We recommend the default _advanced installation options_. However, select the
-options appropriate for your specific situation.
+����Ʈ _advanced installation options_�� �����ϴ� ���� ��õ������ ��Ȳ�� ���� ������ �ɼ��� �����Ͻʽÿ�.
 
 <p align="center">
-  <img src="images/anaconda_default.PNG" alt="Anaconda Install" width="500" border="10" />
 </p>
 
-After installation, you must open **Anaconda Navigator** to finish the setup.
-From the Windows search bar, type _anaconda navigator_. You can close Anaconda
-Navigator after it opens.
+��ġ �Ŀ� �ݵ�� __Anaconda Navigator__ �� ���� ������ �Ϸ��ؾ� �մϴ�.
+Windows Ž�� â����, _anaconda navigator_ �� Ÿ�����Ͽ� Anaconda Navigator �� �� �� �ֽ��ϴ�.
 
-If environment variables were not created, you will see error "conda is not
-recognized as internal or external command" when you type `conda` into the
-command line. To solve this you will need to set the environment variable
-correctly.
+ȯ�� ������ �����Ǿ����� �ʴٸ� `conda` ��ɾ Ÿ�������� ��
+"conda is not recognized as internal or external command" ��� ������ ���� ���Դϴ�.
+�̸� �ذ��ϱ� ���� ��Ȯ�� ȯ�� ���� ������ �ʿ��մϴ�.
 
-Type `environment variables` in the search bar (this can be reached by hitting
-the Windows key or the bottom left Windows button). You should see an option
-called **Edit the system environment variables**.
+Ž�� â���� `ȯ�� ����`�� Ÿ���� �Ͽ� (������ Ű�� �����ų� ���� �Ʒ� ������ ��ư�� ���� �� �� �ֽ��ϴ�).
+ __�ý��� ȯ�� ���� ����__ �ɼ��� �ҷ��ɴϴ�.
 
 <p align="center">
-  <img src="images/edit_env_var.png"
        alt="edit env variables"
        width="250" border="10" />
 </p>
 
-From here, click the **Environment Variables** button. Double click "Path" under
-**System variable** to edit the "Path" variable, click **New** to add the
-following new paths.
+�� �ɼǿ��� __ȯ�� ����__ ��ư�� Ŭ���ϰ�. �Ʒ� __�ý��� ����__���� "Path" ������ ���� Ŭ���ϰ� __���� �����__�� Ŭ���Ͽ� ���� �� path�� �߰��Ͻʽÿ�.
 
 ```console
 %UserProfile%\Anaconda3\Scripts
@@ -68,120 +52,96 @@ following new paths.
 %UserProfile%\Anaconda3\python.exe
 ```
 
-## Step 2: Setup and Activate a New Conda Environment
+## �ܰ� 2: ���ο� Conda ȯ�� ���� �� Ȱ��ȭ
 
-You will create a new [Conda environment](https://conda.io/docs/) to be used
-with the ML-Agents Toolkit. This means that all the packages that you install
-are localized to just this environment. It will not affect any other
-installation of Python or other environments. Whenever you want to run
-ML-Agents, you will need activate this Conda environment.
+ML-Agents toolkit�� �Բ� ����� ���ο� [Conda ȯ��](https://conda.io/docs/)�� ���� ���Դϴ�.
+�� �۾��� ��ġ�� ��� ��Ű���� �� ȯ�濡�� ���ѵȴٴ� ���� �ǹ��մϴ�. �̴� �ٸ� ȯ���̳� �ٸ� ���̽� ��ġ��
+������ ��ġ�� �ʽ��ϴ�. ML-Agents�� ������ ������ �׻� Conda ȯ���� Ȱ��ȭ ���Ѿ� �մϴ�.
 
-To create a new Conda environment, open a new Anaconda Prompt (_Anaconda Prompt_
-in the search bar) and type in the following command:
+���ο� Conda ȯ���� ����� ����, ���ο� Anaconda ������Ʈ(Ž�� â���� _Anaconda Prompt_�� Ŭ��)�� ���� ����
+��ɾ Ÿ���� �Ͻʽÿ�:
 
 ```sh
-conda create -n ml-agents python=3.7
+conda create -n ml-agents python=3.10.12
 ```
 
-You may be asked to install new packages. Type `y` and press enter _(make sure
-you are connected to the Internet)_. You must install these required packages.
-The new Conda environment is called ml-agents and uses Python version 3.7.
+�� ��Ű���� ��ġ�ϱ� ���� �޼����� ���� ��� `y`�� Ÿ�����ϰ� ���͸� �����ʽÿ� _(���ͳ��� ����Ǿ��ִ��� Ȯ���Ͻʽÿ�)_.
+�� �䱸�Ǵ� ��Ű������ �ݵ�� ��ġ�ؾ� �մϴ�. ���ο� Conda ȯ�濡�� Python 3.10.12 ������ ���Ǹ� ml-agents�� ȣ��˴ϴ�.
 
 <p align="center">
-  <img src="images/conda_new.PNG" alt="Anaconda Install" width="500" border="10" />
 </p>
 
-To use this environment, you must activate it. _(To use this environment In the
-future, you can run the same command)_. In the same Anaconda Prompt, type in the
-following command:
+�ռ� ���� ȯ���� �̿��ϱ� ���� �ݵ�� Ȱ��ȭ�� �ؾ��մϴ�. _(���Ŀ� ���� ��ɾ� ���� ȯ���� ������ �� �ֽ��ϴ�)_.
+���� Anaconda ������Ʈ���� ���� ��ɾ Ÿ���� �Ͻʽÿ�:
 
 ```sh
 activate ml-agents
 ```
 
-You should see `(ml-agents)` prepended on the last line.
+Ȱ��ȭ �Ŀ� `(ml-agents)`��� ���ڰ� ������ �� �տ� ��Ÿ���� ���� �� �� �ֽ��ϴ�.
 
-Next, install `tensorflow`. Install this package using `pip` - which is a
-package management system used to install Python packages. Latest versions of
-TensorFlow won't work, so you will need to make sure that you install version
-1.7.1. In the same Anaconda Prompt, type in the following command _(make sure
-you are connected to the Internet)_:
+��������, `tensorflow`�� ��ġ�մϴ�. ���̽� ��Ű���� ��ġ�ϱ� ���� ����ϴ� `pip`��� ��Ű�� ���� �ý��۸� ����Ͽ� ��ġ�� �� �ֽ��ϴ�.
+�ֽ� ������ TensorFlow�� �۵����� ���� �� �����Ƿ�, ��ġ ������ 1.7.1���� Ȯ���ؾ� �մϴ�. ���� Anaconda ������Ʈ â����
+���� ��ɾ Ÿ���� �Ͻʽÿ�._(���ͳ��� ����Ǿ� �ִ��� Ȯ���Ͽ� �ֽʽÿ�)_:
 
 ```sh
 pip install tensorflow==1.7.1
 ```
 
-## Step 3: Install Required Python Packages
+## �ܰ� 3: �ʼ� ���̽� ��Ű�� ��ġ
 
-The ML-Agents Toolkit depends on a number of Python packages. Use `pip` to
-install these Python dependencies.
+ML-Agents toolkit�� ���� ���̽� ��Ű���� �������Դϴ�. `pip`�� ����Ͽ� �� ���̽� ���Ӽ����� ��ġ�Ͻʽÿ�.
 
-If you haven't already, clone the ML-Agents Toolkit Github repository to your
-local computer. You can do this using Git
-([download here](https://git-scm.com/download/win)) and running the following
-commands in an Anaconda Prompt _(if you open a new prompt, be sure to activate
-the ml-agents Conda environment by typing `activate ml-agents`)_:
+ML-Agents Toolkit ����� ����Ұ� ���� ��ǻ�Ϳ� �����Ǿ����� �ʾҴٸ� �����Ͻʽÿ�. Git�� ([�ٿ�ε�](https://git-scm.com/download/win))�ϰ�
+�����Ų �� ���� ��ɾ Anaconda ������Ʈâ�� �Է��Ͽ� ������ �� �ֽ��ϴ�. _(���� �� ������Ʈ â�� �����ִٸ� `activate ml-agents`�� Ÿ�����Ͽ�
+ml-agents Conda ȯ���� Ȱ��ȭ �Ǿ��ִ��� Ȯ���Ͻʽÿ�)_:
 
 ```sh
-git clone --branch release_22 https://github.com/Unity-Technologies/ml-agents.git
+git clone https://github.com/Unity-Technologies/ml-agents.git
 ```
 
-The `--branch release_22` option will switch to the tag of the latest stable
-release. Omitting that will get the `main` branch which is potentially
-unstable.
+���� Git�� ����ϰ� ���� �ʴٸ� ������ [��ũ](https://github.com/Unity-Technologies/ml-agents/archive/main.zip)���� ��� ������ �ٿ�ε� �� �� �ֽ��ϴ�.
 
-If you don't want to use Git, you can find download links on the
-[releases page](https://github.com/Unity-Technologies/ml-agents/releases).
+`UnitySDK` ���� ���丮���� ������Ʈ�� �߰��� ����Ƽ �ּ��� ���ԵǾ� �ֽ��ϴ�. ���� �����ϴµ� ������ �Ǵ� ���� [���� ȯ��](Learning-Environment-Examples.md)���� �ֽ��ϴ�.
 
-The `com.unity.ml-agents` subdirectory contains the core code to add to your
-projects. The `Project` subdirectory contains many
-[example environments](Learning-Environment-Examples.md) to help you get
-started.
+`ml-agents` ���� ���丮���� ����Ƽ ȯ��� �԰� ����ϴ� ���� ��ȭ�н� Ʈ���̳� ���̽� ��Ű���� ���ԵǾ� �ֽ��ϴ�.
 
-The `ml-agents` subdirectory contains a Python package which provides deep
-reinforcement learning trainers to use with Unity environments.
+`ml-agents-envs` ���� ���丮���� `ml-agents` ��Ű���� ���ӵǴ� ����Ƽ�� �������̽��� ���� ���̽� API�� ���ԵǾ� �ֽ��ϴ�.
 
-The `ml-agents-envs` subdirectory contains a Python API to interface with Unity,
-which the `ml-agents` package depends on.
+`gym-unity` ���� ���丮���� OpenAI Gym�� �������̽��� ���� ��Ű���� ���ԵǾ� �ֽ��ϴ�.
 
-The `gym-unity` subdirectory contains a package to interface with OpenAI Gym.
-
-Keep in mind where the files were downloaded, as you will need the trainer
-config files in this directory when running `mlagents-learn`. Make sure you are
-connected to the Internet and then type in the Anaconda Prompt:
+`mlagents-learn`�� ������ �� Ʈ���̳��� ȯ�� ���� ������ �� ���丮 �ȿ� �ʿ��ϹǷ�, ������ �ٿ�ε� �� ���丮�� ��ġ�� ����Ͻʽÿ�.
+���ͳ��� ����Ǿ����� Ȯ���ϰ� Anaconda ������Ʈ���� ���� ��ɾ Ÿ���� �Ͻʽÿ�t:
 
 ```console
-python -m pip install mlagents==1.1.0
+pip install mlagents
 ```
 
-This will complete the installation of all the required Python packages to run
-the ML-Agents Toolkit.
+ML-Agents toolkit�� ������ �� �ʿ��� ��� ���̽� ��Ű���� ��ġ�� �Ϸ��� ���Դϴ�.
 
-Sometimes on Windows, when you use pip to install certain Python packages, the
-pip will get stuck when trying to read the cache of the package. If you see
-this, you can try:
+Windows���� ���� pip�� ����Ͽ� Ư�� ���̽� ��Ű���� ��ġ�� �� ��Ű���� ĳ���� �д� ���� ���� ���� �ֽ��ϴ�.
+������ ���� ������ �ذ��� �� �� �ֽ��ϴ�:
 
 ```console
-python -m pip install mlagents==1.1.0 --no-cache-dir
+pip install mlagents --no-cache-dir
 ```
 
-This `--no-cache-dir` tells the pip to disable the cache.
+`--no-cache-dir`�� pip���� ĳ���� ��Ȱ��ȭ �Ѵٴ� ���Դϴ�.
 
-### Installing for Development
 
-If you intend to make modifications to `ml-agents` or `ml-agents-envs`, you
-should install the packages from the cloned repo rather than from PyPi. To do
-this, you will need to install `ml-agents` and `ml-agents-envs` separately.
+### ������ ���� ��ġ
 
-In our example, the files are located in `C:\Downloads`. After you have either
-cloned or downloaded the files, from the Anaconda Prompt, change to the
-ml-agents subdirectory inside the ml-agents directory:
+���� `ml-agents` �Ǵ� `ml-agents-envs`�� �����ϰ� �ʹٸ�, PyPi�� �ƴ� ������ ����ҷ� ���� ��Ű���� ��ġ�ؾ� �մϴ�.
+�̸� ����, `ml-agents` �� `ml-agents-envs` �� ���� ��ġ�ؾ� �մϴ�.
+
+�������� ������ `C:\Downloads`�� ��ġ�� �ֽ��ϴ�. ������ �����ϰų� �ٿ�ε��� ��
+Anaconda ������Ʈ���� ml-agents ���丮 ���� ml-agents ���� ���丮�� �����Ͻʽÿ�:
 
 ```console
 cd C:\Downloads\ml-agents
 ```
 
-From the repo's main directory, now run:
+������� ���� ���丮���� ������ �����Ͻʽÿ�:
 
 ```console
 cd ml-agents-envs
@@ -191,155 +151,122 @@ cd ml-agents
 pip install -e .
 ```
 
-Running pip with the `-e` flag will let you make changes to the Python files
-directly and have those reflected when you run `mlagents-learn`. It is important
-to install these packages in this order as the `mlagents` package depends on
-`mlagents_envs`, and installing it in the other order will download
-`mlagents_envs` from PyPi.
+`-e` �÷��׸� ����Ͽ� pip�� ���� �ϸ� ���̽� ������ ���� ������ �� �ְ� `mlagents-learn`�� ������ �� �ݿ��˴ϴ�.
+`mlagents` ��Ű���� `mlagents_envs`�� �������̰�, �ٸ� ������ ��ġ�ϸ� PyPi�� ���� `mlagents_envs` �� ��ġ�� �� �ֱ� ������
+�� ������� ��Ű���� ��ġ�ϴ� ���� �߿��մϴ�.
 
-## (Optional) Step 4: GPU Training using The ML-Agents Toolkit
+## (�ɼ�) Step 4: ML-Agents Toolkit�� ����� GPU �н�
 
-GPU is not required for the ML-Agents Toolkit and won't speed up the PPO
-algorithm a lot during training(but something in the future will benefit from
-GPU). This is a guide for advanced users who want to train using GPUs.
-Additionally, you will need to check if your GPU is CUDA compatible. Please
-check Nvidia's page [here](https://developer.nvidia.com/cuda-gpus).
+ML-Agents toolkit�� ���� GPU�� �ʿ����� ������ �н� �߿� PPO �˰��� �ӵ��� ũ�� ������ ���մϴ�(������ ���Ŀ� GPU�� ������ �� �� �ֽ��ϴ�).
+�� ���̵�� GPU�� ����� �н��� �ϰ� ���� ��� ����ڸ� ���� ���̵� �Դϴ�. ���� GPU�� CUDA�� ȣȯ�Ǵ��� Ȯ���ؾ� �մϴ�.
+[����](https://developer.nvidia.com/cuda-gpus) Nvidia ���������� Ȯ���� �ֽʽÿ�.
 
-Currently for the ML-Agents Toolkit, only CUDA v9.0 and cuDNN v7.0.5 is
-supported.
+���� ML-Agents toolkit �� CUDA 9.0 ������ cuDNN 7.0.5 ������ �����˴ϴ�.
 
-### Install Nvidia CUDA toolkit
+### Nvidia CUDA toolkit ��ġ
 
-[Download](https://developer.nvidia.com/cuda-toolkit-archive) and install the
-CUDA toolkit 9.0 from Nvidia's archive. The toolkit includes GPU-accelerated
-libraries, debugging and optimization tools, a C/C++ (Step Visual Studio 2017)
-compiler and a runtime library and is needed to run the ML-Agents Toolkit. In
-this guide, we are using version
-[9.0.176](https://developer.nvidia.com/compute/cuda/9.0/Prod/network_installers/cuda_9.0.176_win10_network-exe)).
+Nvidia ��ī�̺꿡�� CUDA ��Ŷ(toolkit) 9.0�� [�ٿ�ε�](https://developer.nvidia.com/cuda-toolkit-archive)�ϰ� ��ġ�Ͻʽÿ�.
+ML-Agents toolkit�� �����Ű�� ���� CUDA ��Ŷ�� GPU ���� ���̺귯��,
+�����-����ȭ ����, C/C++(���־� ��Ʃ��� 2017) �����Ϸ�, ��Ÿ�� ���̺귯���� �����մϴ�.
+�� ���̵忡���� [9.0.176](https://developer.nvidia.com/compute/cuda/9.0/Prod/network_installers/cuda_9.0.176_win10_network-exe))������ ����մϴ�.
 
-Before installing, please make sure you **close any running instances of Unity
-or Visual Studio**.
+��ġ�ϱ� ��, __���� ���� ����Ƽ �Ǵ� ���־� ��Ʃ����� �����ߴ���__ Ȯ���Ͽ� �ֽʽÿ�.
 
-Run the installer and select the Express option. Note the directory where you
-installed the CUDA toolkit. In this guide, we installed in the directory
-`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0`
+�ν��緯�� �����ϰ� Express �ɼ��� �����Ͻʽÿ�. CUDA ��Ŷ�� ��ġ�� ���丮�� ������ �ֽʽÿ�. �� ���̵忡����,
+`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0` ��ο� ��ġ�մϴ�.
 
-### Install Nvidia cuDNN library
+### Nvidia cuDNN ���̺귯�� ��ġ
 
-[Download](https://developer.nvidia.com/cudnn) and install the cuDNN library
-from Nvidia. cuDNN is a GPU-accelerated library of primitives for deep neural
-networks. Before you can download, you will need to sign up for free to the
-Nvidia Developer Program.
+Nvidia���� cuDNN ���̺귯���� [�ٿ�ε�](https://developer.nvidia.com/cudnn)�ϰ� ��ġ�Ͻʽÿ�.
+cuDNN�� ���� �Ű���� ���� �⺻�� �Ǵ� GPU ���� ���̺귯��. �ٿ�ε� ���� Nvidia Developer Program�� �����ؾ��� ���Դϴ�(����).
 
 <p align="center">
-  <img src="images/cuDNN_membership_required.png"
        alt="cuDNN membership required"
        width="500" border="10" />
 </p>
 
-Once you've signed up, go back to the cuDNN
-[downloads page](https://developer.nvidia.com/cudnn). You may or may not be
-asked to fill out a short survey. When you get to the list cuDNN releases,
-**make sure you are downloading the right version for the CUDA toolkit you
-installed in Step 1.** In this guide, we are using version 7.0.5 for CUDA
-toolkit version 9.0
-([direct link](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.5/prod/9.0_20171129/cudnn-9.0-windows10-x64-v7)).
+�����ϰ� cuDNN [�ٿ�ε� ������](https://developer.nvidia.com/cudnn)�� ���ư��ʽÿ�.
+ª�� �������翡 �����ؾ� �� ���� �ֽ��ϴ�. When you get to the list
+cuDNN ������ ����Ʈ���� __�ܰ� 1���� ��ġ�� CUDA ��Ŷ�� �´� ������ �ٿ�ε��ϰ� �ִ��� Ȯ���Ͻʽÿ�.__ �� ���̵忡����,
+CUDA ��Ŷ 9.0 ������ ���� 7.0.5 ������ ����մϴ�
+([�ٿ�ε� ��ũ](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.5/prod/9.0_20171129/cudnn-9.0-windows10-x64-v7)).
 
-After you have downloaded the cuDNN files, you will need to extract the files
-into the CUDA toolkit directory. In the cuDNN zip file, there are three folders
-called `bin`, `include`, and `lib`.
+cuDNN ������ �ٿ�ε� �� �Ŀ�, CUDA ��Ŷ ���丮�ȿ� ������ ����(���� ����)�ؾ� �մϴ�.
+cuDNN zip ���� �ȿ��� ������ ���� `bin`, `include`, �׸��� `lib`�� �ֽ��ϴ�.
 
 <p align="center">
-  <img src="images/cudnn_zip_files.PNG"
        alt="cuDNN zip files"
        width="500" border="10" />
 </p>
 
-Copy these three folders into the CUDA toolkit directory. The CUDA toolkit
-directory is located at
-`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0`
+�� ������ ������ CUDA ��Ŷ ���丮�ȿ� �����Ͻʽÿ�.
+CUDA ��Ŷ ���丮�� `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0`�� ��ġ�� �ֽ��ϴ�.
 
 <p align="center">
-  <img src="images/cuda_toolkit_directory.PNG"
        alt="cuda toolkit directory"
        width="500" border="10" />
 </p>
 
-### Set Environment Variables
+### ȯ�� ���� ����
 
-You will need to add one environment variable and two path variables.
+1���� ȯ�� ������ 2���� ��� ������ �߰��ؾ� �մϴ�.
 
-To set the environment variable, type `environment variables` in the search bar
-(this can be reached by hitting the Windows key or the bottom left Windows
-button). You should see an option called **Edit the system environment
-variables**.
+ȯ�� ������ �����ϱ� ����, Ž�� â���� `ȯ�� ����`�� Ÿ���� �Ͽ� (������ Ű�� �����ų� ���� �Ʒ� ������ ��ư�� ���� �� �� �ֽ��ϴ�).
+ __�ý��� ȯ�� ���� ����__ �ɼ��� �ҷ��ɴϴ�.
 
 <p align="center">
-  <img src="images/edit_env_var.png"
        alt="edit env variables"
        width="250" border="10" />
 </p>
 
-From here, click the **Environment Variables** button. Click **New** to add a
-new system variable _(make sure you do this under **System variables** and not
-User variables_.
+�� �ɼǿ��� __ȯ�� ����__ ��ư�� Ŭ���ϰ� �ý��� ������ __���� �����__�� Ŭ���Ͻʽÿ� _(����� ������ �ƴ� �Ʒ��� __�ý��� ����__���� Ȯ���Ͻʽÿ�).
 
 <p align="center">
-  <img src="images/new_system_variable.PNG"
        alt="new system variable"
        width="500" border="10" />
 </p>
 
-For **Variable Name**, enter `CUDA_HOME`. For the variable value, put the
-directory location for the CUDA toolkit. In this guide, the directory location
-is `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0`. Press **OK** once.
+__���� �̸�__�� `CUDA_HOME`���� �����ϰ� ���� ������ CUDA ��Ŷ ���丮 ��θ� �Է��� �ֽʽÿ�.
+�� ���̵忡�� ���丮 ��δ� `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0` �Դϴ�. Ȯ�� ��ư�� �����ֽʽÿ�.
 
 <p align="center">
-  <img src="images/system_variable_name_value.PNG"
        alt="system variable names and values"
        width="500" border="10" />
 </p>
 
-To set the two path variables, inside the same **Environment Variables** window
-and under the second box called **System Variables**, find a variable called
-`Path` and click **Edit**. You will add two directories to the list. For this
-guide, the two entries would look like:
+2���� ��� ���� ������ ���� __ȯ�� ����__ â �׸��� �Ʒ� �ι�° �ڽ��� __�ý��� ����__�ȿ���,
+`Path` ������ ã�� Ŭ���ϰ� __����__��ư�� �����ʽÿ�. ����Ʈ�� 2���� ���丮�� �߰��� ���Դϴ�. �� ���丮�� ������ �����ϴ�:
 
 ```console
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\lib\x64
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\extras\CUPTI\libx64
 ```
 
-Make sure to replace the relevant directory location with the one you have
-installed. _Please note that case sensitivity matters_.
+���� ���丮 ��ġ�� ��ġ�� ���丮 ������� Ȯ���Ͻʽÿ�. _��ҹ��ڿ� �����Ͻʽÿ�_.
 
 <p align="center">
-    <img src="images/path_variables.PNG"
         alt="Path variables"
         width="500" border="10" />
 </p>
 
-### Install TensorFlow GPU
+### TensorFlow GPU ��ġ
 
-Next, install `tensorflow-gpu` using `pip`. You'll need version 1.7.1. In an
-Anaconda Prompt with the Conda environment ml-agents activated, type in the
-following command to uninstall TensorFlow for cpu and install TensorFlow for gpu
-_(make sure you are connected to the Internet)_:
+����, `pip`�� ����Ͽ� 1.7.1. ���� `tensorflow-gpu`�� ��ġ�Ͻʽÿ� . ml-agents Conda ȯ���� Ȱ��ȭ ��Ų Anaconda ������Ʈ����
+CPU�� TensorFlow �����ϰ� GPU�� TensorFlow�� ��ġ�ϱ� ���� ���� ��ɾ Ÿ���� �Ͻʽÿ� _(���ͳ��� ����Ǿ� �ִ��� Ȯ���Ͻʽÿ�)_:
 
 ```sh
 pip uninstall tensorflow
 pip install tensorflow-gpu==1.7.1
 ```
 
-Lastly, you should test to see if everything installed properly and that
-TensorFlow can identify your GPU. In the same Anaconda Prompt, open Python in
-the Prompt by calling:
+����������, ��� ���� ����� ��ġ�Ǿ� �ְ�, Tensorflow���� GPU�� �ν��ϰ� �ִ��� �׽�Ʈ�ؾ��մϴ�.
+���� Anaconda ������Ʈ���� Python�� ȣ���Ͽ� ���ϴ�:
 
 ```sh
 python
 ```
 
-And then type the following commands:
+�׸��� ���� ��ɾ Ÿ���� �Ͻʽÿ�:
 
 ```python
 import tensorflow as tf
@@ -347,7 +274,7 @@ import tensorflow as tf
 sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 ```
 
-You should see something similar to:
+������ ����� ������ �� �� ���� ���Դϴ�:
 
 ```console
 Found device 0 with properties ...
@@ -355,8 +282,12 @@ Found device 0 with properties ...
 
 ## Acknowledgments
 
-We would like to thank
+�� ���̵带 ����� ���� ���� �ʾ��� �ۼ���
 [Jason Weimann](https://unity3d.college/2017/10/25/machine-learning-in-unity3d-setting-up-the-environment-tensorflow-for-agentml-on-windows-10/)
-and
+��
 [Nitish S. Mutha](http://blog.nitishmutha.com/tensorflow/2017/01/22/TensorFlow-with-gpu-for-windows.html)
-for writing the original articles which were used to create this guide.
+���� ����帳�ϴ�.
+
+## �ѱ� ����
+
+�ش� ������ �ѱ� ������ [������ (Hyeonjun Jang)]([https://github.com/janghyeonjun](https://github.com/janghyeonjun))�� ���� ����Ǿ����ϴ�. ����� ������ ��Ż�ڰ� �ִ� ��� totok682@naver.com ���� �����ֽø� ����帮�ڽ��ϴ�.

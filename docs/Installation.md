@@ -1,216 +1,103 @@
-# Installation
+# 설치
 
-The ML-Agents Toolkit contains several components:
+ML-Agents를 설치하고 사용하기 위해 유니티를 설치해야 하고 이 Repository(저장소)를
+Clone(복제)하고 추가종속성을 가지는 Python(파이썬)을 설치해야합니다. 아래 Subsection(하위섹션)에서는 Docker(도커) 설정 외에도
+각 단계를 개괄적으로 설명합니다.
 
-- Unity package ([`com.unity.ml-agents`](../com.unity.ml-agents/)) contains the
-  Unity C# SDK that will be integrated into your Unity project. This package contains
-  a sample to help you get started with ML-Agents, including advanced features like
-  custom sensors, input system integration, and physics-based components.
-- Two Python packages:
-  - [`mlagents`](../ml-agents/) contains the machine learning algorithms that
-    enables you to train behaviors in your Unity scene. Most users of ML-Agents
-    will only need to directly install `mlagents`.
-  - [`mlagents_envs`](../ml-agents-envs/) contains a set of Python APIs to interact with
-    a Unity scene. It is a foundational layer that facilitates data messaging
-    between Unity scene and the Python machine learning algorithms.
-    Consequently, `mlagents` depends on `mlagents_envs`.
-- Unity [Project](https://github.com/Unity-Technologies/ml-agents/tree/main/Project/) that contains several
-  [example environments](Learning-Environment-Examples.md) that highlight the
-  various features of the toolkit to help you get started.
+## **Unity 2018.4** 또는 이후의 버전을 설치하십시오.
 
-Consequently, to install and use the ML-Agents Toolkit you will need to:
+[다운로드](https://store.unity.com/kr/download)하고 설치하십시오. 만약 저희의 도커 설정(차후에 소개할)을 사용하고 싶다면,
+유니티를 설치할 때, Linux Build Support를 설정하십시오.
 
-- Install Unity (6000.0 or later)
-- Install Python (>= 3.10.1, <=3.10.12) - we recommend using 3.10.12
-- Clone this repository (Recommended for the latest version and bug fixes)
-  - __Note:__ If you do not clone the repository, then you will not be
-  able to access the example environments and training configurations.
-  Additionally, the [Getting Started Guide](Getting-Started.md) assumes that you have cloned the
-  repository.
-- Install the `com.unity.ml-agents` Unity package
-- Install the `mlagents-envs`
-- Install the `mlagents` Python package
+<p align="center">
+       alt="Linux Build Support"
+       width="500" border="10" />
+</p>
 
-### Install **Unity 6000.0** or Later
+## Windows 사용자
+Windows에서 환경을 설정하기 위해, [세부 사항](Installation-Anaconda-Windows.md)에 설정 방법에 대해 작성하였습니다.
+Mac과 Linux는 다음 가이드를 확인해주십시오.
 
-[Download](https://unity3d.com/get-unity/download) and install Unity. We
-strongly recommend that you install Unity through the Unity Hub as it will
-enable you to manage multiple Unity versions.
+## Mac 또는 Unix 사용자
 
-### Install **Python 3.10.12**
+### ML-Agents Toolkit 저장소 복제
 
-We recommend [installing](https://www.python.org/downloads/) Python 3.10.12.
-If you are using Windows, please install the x86-64 version and not x86.
-If your Python environment doesn't include `pip3`, see these
-[instructions](https://packaging.python.org/guides/installing-using-linux-tools/#installing-pip-setuptools-wheel-with-linux-package-managers)
-on installing it. We also recommend using [conda](https://docs.conda.io/en/latest/) or [mamba](https://github.com/mamba-org/mamba) to manage your python virtual environments.
-
-#### Conda python setup
-
-Once conda has been installed in your system, open a terminal and execute the following commands to setup a python 3.10.12 virtual environment
-and activate it.
-
-```shell
-conda create -n mlagents python=3.10.12 && conda activate mlagents
-```
-
-### Clone the ML-Agents Toolkit Repository (Recommended)
-
-Now that you have installed Unity and Python, you can now install the Unity and
-Python packages. You do not need to clone the repository to install those
-packages, but you may choose to clone the repository if you'd like download our
-example environments and training configurations to experiment with them (some
-of our tutorials / guides assume you have access to our example environments).
-
-**NOTE:** There are samples shipped with the Unity Package.  You only need to clone
-the repository if you would like to explore more examples.
-
-```sh
-git clone --branch release_22 https://github.com/Unity-Technologies/ml-agents.git
-```
-
-The `--branch release_22` option will switch to the tag of the latest stable
-release. Omitting that will get the `develop` branch which is potentially unstable.
-However, if you find that a release branch does not work, the recommendation is to use
-the `develop` branch as it may have potential fixes for bugs and dependency issues.
-
-(Optional to get bleeding edge)
+유니티 설치 후에 ML-Agents Toolkit 깃허브 저장소를 설치하고 싶을 것입니다.
 
 ```sh
 git clone https://github.com/Unity-Technologies/ml-agents.git
 ```
 
-#### Advanced: Local Installation for Development
+`UnitySDK` 하위 디렉토리에는 프로젝트에 추가할 유니티 애셋이 포함되어 있습니다.
+또한 시작하는데 도움이 되는 많은 [예제 환경](Learning-Environment-Examples.md)들이 있습니다.
 
-You will need to clone the repository if you plan to modify or extend the
-ML-Agents Toolkit for your purposes. If you plan to contribute those changes
-back, make sure to clone the `develop` branch (by omitting `--branch release_22`
-from the command above). See our
-[Contributions Guidelines](../com.unity.ml-agents/CONTRIBUTING.md) for more
-information on contributing to the ML-Agents Toolkit.
+`ml-agents` 하위 디렉토리에는 유니티 환경과 함게 사용하는 심층 강화학습 트레이너 파이썬 패키지가 포함되어 있습니다.
 
-### Install the `com.unity.ml-agents` Unity package
+`ml-agents-envs` 하위 디렉토리에는 `ml-agents` 패키지에 종속되는 유니티의 인터페이스를 위한 파이썬 API가 포함되어 있습니다.
 
-The Unity ML-Agents C# SDK is a Unity Package. You can install the
-`com.unity.ml-agents` package
-[directly from the Package Manager registry](https://docs.unity3d.com/Manual/upm-ui-install.html).
-Please make sure you enable 'Preview Packages' in the 'Advanced' dropdown in
-order to find the latest Preview release of the package.
+`gym-unity` 하위 디렉토리에는 OpenAI Gym의 인터페이스를 위한 패키지가 포함되어 있습니다.
 
-**NOTE:** If you do not see the ML-Agents package listed in the Package Manager
-please follow the [advanced installation instructions](#advanced-local-installation-for-development) below.
+### 파이썬과 mlagents 패키지 설치
 
-#### Advanced: Local Installation for Development
+ML-Agents toolkit을 사용하기 위해 [setup.py file](../ml-agents/setup.py)에 나열된 종속성과 함께 파이썬 3.10.12이 필요합니다.
+주요 종속성의 일부는 다음을 포함합니다:
 
-You can [add the local](https://docs.unity3d.com/Manual/upm-ui-local.html)
-`com.unity.ml-agents` package (from the repository that you just cloned) to your
-project by:
+- [TensorFlow](Background-TensorFlow.md) (Requires a CPU w/ AVX support)
+- [Jupyter](Background-Jupyter.md)
 
-1. navigating to the menu `Window` -> `Package Manager`.
-1. In the package manager window click on the `+` button on the top left of the packages list).
-1. Select `Add package from disk...`
-1. Navigate into the `com.unity.ml-agents` folder.
-1. Select the `package.json` file.
+Python 3.10.12이 만약 설치되어 있지 않다면, [다운로드](https://www.python.org/downloads/)하고 설치하십시오.
 
-<p align="center">
-  <img src="../images/unity_package_manager_window.png"
-       alt="Unity Package Manager Window"
-       height="150"
-       border="10" />
-  <img src="../images/unity_package_json.png"
-     alt="package.json"
-     height="150"
-     border="10" />
-</p>
+만약 당신의 파이썬 환경이 `pip3`을 포함하지 않는다면, 다음
+[지시사항](https://packaging.python.org/guides/installing-using-linux-tools/#installing-pip-setuptools-wheel-with-linux-package-managers)
+을 따라서 설치하십시오.
 
-If you are going to follow the examples from our documentation, you can open the
-`Project` folder in Unity and start tinkering immediately.
-
-### Install the `mlagents` Python package
-
-Installing the `mlagents` Python package involves installing other Python
-packages that `mlagents` depends on. So you may run into installation issues if
-your machine has older versions of any of those dependencies already installed.
-Consequently, our supported path for installing `mlagents` is to leverage Python
-Virtual Environments. Virtual Environments provide a mechanism for isolating the
-dependencies for each project and are supported on Mac / Windows / Linux. We
-offer a dedicated [guide on Virtual Environments](Using-Virtual-Environment.md).
-
-#### (Windows) Installing PyTorch
-
-On Windows, you'll have to install the PyTorch package separately prior to
-installing ML-Agents in order to make sure the cuda-enabled version is used,
-rather than the CPU-only version. Activate your virtual environment and run from
-the command line:
+종속성과 `mlagents` 파이썬 패키지를 설치하기 위해 다음 명령어를 실행하십시오:
 
 ```sh
-pip3 install torch~=2.2.1 --index-url https://download.pytorch.org/whl/cu121
+pip3 install mlagents
 ```
 
-Note that on Windows, you may also need Microsoft's
-[Visual C++ Redistributable](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
-if you don't have it already. See the [PyTorch installation guide](https://pytorch.org/get-started/locally/)
-for more installation options and versions.
+이 명령어를 통해 PyPi로 부터(복제된 저장소가 아닌) `ml-agents`가 설치될 것입니다.
+만약 성공적으로 설치를 완료 했다면, `mlagents-learn --help` 명령어를 실행할 수 있을 것입니다.
+명령어를 실행하면 유니티 로고와 `mlagents-learn`에서 사용할 수 있는 명령어 라인 매개변수들을 볼 수 있습니다.
 
-#### Installing `mlagents`
+**주의:**
 
-To install the `mlagents` Python package, activate your virtual environment and
-run from the command line:
+- 현재 Python 3.10.12 또는 Python 3.5을 지원하지 않습니다.
+- 만약 Anaconda를 사용하고 TensorFlow에 문제가 있다면, 다음
+  [링크](https://www.tensorflow.org/install/pip)에서 Anaconda 환경에서 어떻게 TensorFlow를 설치하는지 확인하십시오.
+### 개발을 위한 설치방법
+
+만약 `ml-agents` 또는 `ml-agents-envs`를 수정하고 싶다면, PyPi가 아닌 복제된 저장소로 부터 패키지를 설치해야 합니다.
+이를 위해, `ml-agents`와 `ml-agents-envs`를 각각 설치해야 합니다. 저장소의 루트 디렉토리에서 다음 명령어를 실행하십시오:
 
 ```sh
-cd /path/to/ml-agents
-python -m pip install ./ml-agents-envs
-python -m pip install ./ml-agents
+cd ml-agents-envs
+pip3 install -e ./
+cd ..
+cd ml-agents
+pip3 install -e ./
 ```
 
-Note that this will install `mlagents` from the cloned repository, _not_ from the PyPi
-repository. If you installed this correctly, you should be able to run
-`mlagents-learn --help`, after which you will see the command
-line parameters you can use with `mlagents-learn`.
+`-e` 플래그를 사용하여 pip를 실행 하면 파이썬 파일을 직접 변경할 수 있고 `mlagents-learn`를 실행할 때 반영됩니다.
+`mlagents` 패키지가 `mlagents_envs`에 의존적이고, 다른 순서로 설치하면 PyPi로 부터 `mlagents_envs`를
+설치할 수 있기 때문에 이 순서대로 패키지를 설치하는 것은 중요합니다.
 
-**NOTE:** Since ML-Agents development has slowed, PyPi releases will be less frequent. However, you can install from PyPi by executing
-the following command:
+## 도커 기반 설치
 
-```shell
-python -m pip install mlagents==1.1.0
-```
+만약 ML-Agents를 위해 도커를 사용하고 싶다면, [이 가이드](Using-Docker.md)를 따라하십시오.
 
-which will install the latest version of ML-Agents and associated dependencies available on PyPi. Note, you need to have the matching version of
-the Unity packages with the particular release of the python packages. You can find the release history [here](https://github.com/Unity-Technologies/ml-agents/releases)
+## 다음 단계
 
-By installing the `mlagents` package, the dependencies listed in the
-[setup.py file](../ml-agents/setup.py) are also installed. These include
-[PyTorch](Background-PyTorch.md).
+[기초 가이드](Basic-Guide.md) 페이지에는 유니티 내에서 ML-Agents toolkit의 설정 및 학습된 모델 실행,
+환경 구축, 학습 방법에 대한 여러 짧은 튜토리얼을 포함하고 있습니다.
 
-#### Advanced: Local Installation for Development
+## 도움말
 
-If you intend to make modifications to `mlagents` or `mlagents_envs`, you should
-install the packages from the cloned repository rather than from PyPi. To do
-this, you will need to install `mlagents` and `mlagents_envs` separately. From
-the repository's root directory, run:
+ML-Agents와 관련된 문제가 발생하면 저희의 [FAQ](FAQ.md)와 [제약 사항](Limitations.md) 페이지를 참고해 주십시오.
+만약 문제에 대한 아무것도 찾을 수 없다면 OS, Pythons 버전 및 정확한 오류 메세지와 함께 [이슈 제출](https://github.com/Unity-Technologies/ml-agents/issues)을 해주십시오.
 
-```sh
-pip3 install torch -f https://download.pytorch.org/whl/torch_stable.html
-pip3 install -e ./ml-agents-envs
-pip3 install -e ./ml-agents
-```
 
-Running pip with the `-e` flag will let you make changes to the Python files
-directly and have those reflected when you run `mlagents-learn`. It is important
-to install these packages in this order as the `mlagents` package depends on
-`mlagents_envs`, and installing it in the other order will download
-`mlagents_envs` from PyPi.
+## 한글 번역
 
-## Next Steps
-
-The [Getting Started](Getting-Started.md) guide contains several short tutorials
-on setting up the ML-Agents Toolkit within Unity, running a pre-trained model,
-in addition to building and training environments.
-
-## Help
-
-If you run into any problems regarding ML-Agents, refer to our [FAQ](FAQ.md) and
-our [Limitations](Limitations.md) pages. If you can't find anything please
-[submit an issue](https://github.com/Unity-Technologies/ml-agents/issues) and
-make sure to cite relevant information on OS, Python version, and exact error
-message (whenever possible).
+해당 문서의 한글 번역은 [장현준 (Hyeonjun Jang)]([https://github.com/janghyeonjun](https://github.com/janghyeonjun))에 의해 진행되었습니다. 내용상 오류나 오탈자가 있는 경우 totok682@naver.com 으로 연락주시면 감사드리겠습니다.
