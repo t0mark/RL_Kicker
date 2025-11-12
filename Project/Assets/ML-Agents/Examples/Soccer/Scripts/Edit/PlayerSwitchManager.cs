@@ -15,13 +15,27 @@ public class PlayerSwitchManager : MonoBehaviour
     public float hysteresis = 1.5f;
 
     [Header("Visual Indicator")]
+    public bool usePrefabIndicator = false;
     public GameObject controlIndicatorPrefab;
+    [Tooltip("Procedural indicator color (used when no prefab is assigned).")]
+    public Color indicatorColor = new Color(0.1f, 0.85f, 0.3f, 1f);
+    [Tooltip("Radius of the procedural indicator ring.")]
+    public float indicatorRadius = 1.8f;
+    [Tooltip("Line width of the procedural indicator ring.")]
+    public float indicatorLineWidth = 0.1f;
+    [Tooltip("Vertical offset applied when attaching the indicator to the player.")]
+    public float indicatorYOffset = 0.2f;
+    [Range(3, 128)]
+    [Tooltip("How smooth the procedural ring should be.")]
+    public int indicatorSegments = 32;
 
     GameObject currentIndicator;
     float _timer, _cooldown;
     Transform _currentControlled;
 
     GameObject[] _allBlueAgents = Array.Empty<GameObject>();
+    LineRenderer _proceduralIndicator;
+    Material _indicatorMaterial;
 
     public static event Action<Transform> OnControlledChanged;
     public Transform CurrentControlled => _currentControlled;
@@ -108,12 +122,18 @@ public class PlayerSwitchManager : MonoBehaviour
         _currentControlled = newTarget;
         OnControlledChanged?.Invoke(_currentControlled);
 
-        if (controlIndicatorPrefab != null)
+        if (usePrefabIndicator && controlIndicatorPrefab != null)
         {
             if (currentIndicator == null)
+            {
                 currentIndicator = Instantiate(controlIndicatorPrefab);
-            currentIndicator.transform.SetParent(newTarget);
-            currentIndicator.transform.localPosition = new Vector3(0, 5f, 0);
+            }
+            currentIndicator.transform.SetParent(newTarget, false);
+            currentIndicator.transform.localPosition = new Vector3(0, indicatorYOffset, 0);
+        }
+        else
+        {
+            AttachProceduralIndicator(newTarget);
         }
 
         _cooldown = minSwitchCooldown;
@@ -190,5 +210,93 @@ public class PlayerSwitchManager : MonoBehaviour
         Vector3 d = tA.position - tB.position;
         d.y = 0f;
         return d.sqrMagnitude;
+    }
+
+    void AttachProceduralIndicator(Transform target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        EnsureProceduralIndicator();
+        _proceduralIndicator.transform.SetParent(target, false);
+        _proceduralIndicator.transform.localPosition = new Vector3(0f, indicatorYOffset, 0f);
+        _proceduralIndicator.transform.localRotation = Quaternion.identity;
+        _proceduralIndicator.enabled = true;
+    }
+
+    void EnsureProceduralIndicator()
+    {
+        if (_proceduralIndicator != null)
+        {
+            UpdateIndicatorAppearance();
+            return;
+        }
+
+        var go = new GameObject("ControlIndicator(LineRenderer)");
+        _proceduralIndicator = go.AddComponent<LineRenderer>();
+        _proceduralIndicator.loop = true;
+        _proceduralIndicator.useWorldSpace = false;
+        _proceduralIndicator.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        _proceduralIndicator.receiveShadows = false;
+        _proceduralIndicator.alignment = LineAlignment.View;
+        _proceduralIndicator.textureMode = LineTextureMode.Stretch;
+        _indicatorMaterial = new Material(Shader.Find("Sprites/Default"));
+        _proceduralIndicator.material = _indicatorMaterial;
+        UpdateIndicatorAppearance();
+    }
+
+    void UpdateIndicatorAppearance()
+    {
+        if (_proceduralIndicator == null)
+        {
+            return;
+        }
+
+        indicatorSegments = Mathf.Clamp(indicatorSegments, 3, 128);
+        _proceduralIndicator.positionCount = indicatorSegments;
+        _proceduralIndicator.startColor = indicatorColor;
+        _proceduralIndicator.endColor = indicatorColor;
+        _proceduralIndicator.widthMultiplier = Mathf.Max(0.001f, indicatorLineWidth);
+        if (_indicatorMaterial != null)
+        {
+            _indicatorMaterial.color = indicatorColor;
+        }
+
+        var points = new Vector3[indicatorSegments];
+        float step = Mathf.PI * 2f / indicatorSegments;
+        for (int i = 0; i < indicatorSegments; i++)
+        {
+            float angle = step * i;
+            points[i] = new Vector3(Mathf.Cos(angle) * indicatorRadius, 0f, Mathf.Sin(angle) * indicatorRadius);
+        }
+        _proceduralIndicator.SetPositions(points);
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+        UpdateIndicatorAppearance();
+    }
+#endif
+
+    void OnDestroy()
+    {
+        if (_indicatorMaterial != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(_indicatorMaterial);
+            }
+            else
+            {
+                DestroyImmediate(_indicatorMaterial);
+            }
+        }
     }
 }

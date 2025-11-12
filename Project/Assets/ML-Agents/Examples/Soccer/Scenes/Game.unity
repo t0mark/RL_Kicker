@@ -1605,7 +1605,7 @@ GameObject:
   - component: {fileID: 1909822730}
   - component: {fileID: 1909822729}
   m_Layer: 0
-  m_Name: PlayerControlManager
+  m_Name: PlayerSwitchManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1622,14 +1622,20 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79635d31058e97d45a557756f6e485a1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerControlManager
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSwitchManager
   blueAgentTag: blueAgent
   ball: {fileID: 301189256}
   checkInterval: 0.2
   minSwitchCooldown: 0.6
   hysteresis: 1.5
+  usePrefabIndicator: 0
   controlIndicatorPrefab: {fileID: 2266545456261321133, guid: e372ba4abc1449b4097e370adbe17644,
     type: 3}
+  indicatorColor: {r: 0.10000002, g: 0.85098046, b: 0.29803926, a: 1}
+  indicatorRadius: 1.8
+  indicatorLineWidth: 0.1
+  indicatorYOffset: 0.2
+  indicatorSegments: 32
 --- !u!4 &1909822730
 Transform:
   m_ObjectHideFlags: 0
