@@ -16,10 +16,19 @@ public class ManualController : MonoBehaviour
     public bool autoFaceBall = true;
     public float turnSpeedDegPerSec = 540f;
 
+    [Header("Dribble")]
+    [Tooltip("드리블 중일 때 자동으로 볼을 바라보기를 비활성화할지 여부")]
+    public bool disableAutoFaceWhenDribbling = true;
+
     Rigidbody _rb;
     Vector3 _desiredMove;
+    DribbleController _dribbleController;
 
-    void Awake() => _rb = GetComponent<Rigidbody>();
+    void Awake()
+    {
+        _rb = GetComponent<Rigidbody>();
+        _dribbleController = GetComponent<DribbleController>();
+    }
 
     void OnEnable()
     {
@@ -60,8 +69,14 @@ public class ManualController : MonoBehaviour
             _rb.linearVelocity = new Vector3(planar.x, _rb.linearVelocity.y, planar.z);
         }
 
-        // 볼 자동 바라보기
-        if (autoFaceBall && ball)
+        // 볼 자동 바라보기 (드리블 중이 아닐 때만)
+        bool shouldAutoFace = autoFaceBall && ball;
+        if (disableAutoFaceWhenDribbling && _dribbleController != null && _dribbleController.IsDribbling)
+        {
+            shouldAutoFace = false;
+        }
+
+        if (shouldAutoFace)
         {
             var to = ball.position - transform.position; to.y = 0f;
             if (to.sqrMagnitude > 1e-4f)
@@ -70,6 +85,18 @@ public class ManualController : MonoBehaviour
                 _rb.MoveRotation(Quaternion.RotateTowards(
                     _rb.rotation, target, turnSpeedDegPerSec * Time.fixedDeltaTime));
             }
+        }
+    }
+
+    /// <summary>
+    /// 수동 컨트롤러로 공을 차기 위한 헬퍼 메서드
+    /// Space키로 호출됨 (DribbleController의 Update에서 처리)
+    /// </summary>
+    public void TriggerKick()
+    {
+        if (_dribbleController != null)
+        {
+            _dribbleController.Kick();
         }
     }
 }

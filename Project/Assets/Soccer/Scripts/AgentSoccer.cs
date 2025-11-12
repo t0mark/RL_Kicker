@@ -83,6 +83,9 @@ public class AgentSoccer : Agent
     [HideInInspector]
     public bool manualOverride = false;
 
+    // 드리블 컨트롤러 참조
+    DribbleController m_DribbleController;
+
     public override void Initialize()
     {
         m_EnvController = GetComponentInParent<SoccerEnvController>();
@@ -134,6 +137,9 @@ public class AgentSoccer : Agent
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        // 드리블 컨트롤러 초기화
+        m_DribbleController = GetComponent<DribbleController>();
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -152,6 +158,12 @@ public class AgentSoccer : Agent
             case 1:
                 dirToGo = transform.forward * m_ForwardSpeed;
                 m_KickPower = 1f;
+
+                // 드리블 중일 때 킥 실행
+                if (m_DribbleController != null && m_DribbleController.IsDribbling)
+                {
+                    m_DribbleController.KickWithPower(k_Power * m_KickPower);
+                }
                 break;
             case 2:
                 dirToGo = transform.forward * -m_ForwardSpeed;
@@ -253,9 +265,14 @@ public class AgentSoccer : Agent
         if (c.gameObject.CompareTag("ball"))
         {
             AddReward(.2f * m_BallTouch);
-            var dir = c.contacts[0].point - transform.position;
-            dir = dir.normalized;
-            c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+
+            // 드리블 중이 아닐 때만 물리적으로 공을 밀기
+            if (m_DribbleController == null || !m_DribbleController.IsDribbling)
+            {
+                var dir = c.contacts[0].point - transform.position;
+                dir = dir.normalized;
+                c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+            }
         }
     }
 
