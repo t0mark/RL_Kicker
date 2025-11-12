@@ -26,20 +26,27 @@ public class PlayerSwitchManager : MonoBehaviour
     public static event Action<Transform> OnControlledChanged;
     public Transform CurrentControlled => _currentControlled;
 
+    void Awake()
+    {
+        CacheAgents();
+        TryResolveBallReference();
+    }
+
+    void Start()
+    {
+        EnsureInitialControlledPlayer();
+    }
+
     void Update()
     {
         _timer += Time.deltaTime;
         _cooldown -= Time.deltaTime;
         if (_timer < checkInterval) return;
         _timer = 0f;
-        if (ball == null) return;
+        if (!TryResolveBallReference()) return;
 
-        float SqrDistXZ(Transform tA, Transform tB)
-        {
-            Vector3 d = tA.position - tB.position;
-            d.y = 0f;
-            return d.sqrMagnitude;
-        }
+        CacheAgents();
+        if (_allBlueAgents == null || _allBlueAgents.Length == 0) return;
 
         // 입력이 들어오는 동안은 스위치 보류
         bool userMoving =
@@ -47,23 +54,9 @@ public class PlayerSwitchManager : MonoBehaviour
             Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) ||
             Input.GetKey(KeyCode.LeftShift);
 
-        _allBlueAgents = GameObject.FindGameObjectsWithTag(blueAgentTag);
-        if (_allBlueAgents == null || _allBlueAgents.Length == 0) return;
-
-        Transform nearest = null;
-        float bestSqr = float.MaxValue;
-
-        foreach (var go in _allBlueAgents)
-        {
-            if (!go.activeInHierarchy) continue;
-            float d2 = SqrDistXZ(go.transform, ball);
-            if (d2 < bestSqr)
-            {
-                bestSqr = d2;
-                nearest = go.transform;
-            }
-        }
+        var nearest = FindNearestAgentToBall();
         if (nearest == null) return;
+        float bestSqr = SqrDistXZ(nearest, ball);
 
         // 현재 조종 중인 선수의 거리
         float currentSqr = (_currentControlled != null)
@@ -124,5 +117,78 @@ public class PlayerSwitchManager : MonoBehaviour
         }
 
         _cooldown = minSwitchCooldown;
+    }
+
+    void CacheAgents()
+    {
+        _allBlueAgents = GameObject.FindGameObjectsWithTag(blueAgentTag);
+    }
+
+    bool TryResolveBallReference()
+    {
+        if (ball != null)
+        {
+            return true;
+        }
+
+        var foundBall = GameObject.FindGameObjectWithTag("ball");
+        if (foundBall != null)
+        {
+            ball = foundBall.transform;
+        }
+
+        return ball != null;
+    }
+
+    void EnsureInitialControlledPlayer()
+    {
+        CacheAgents();
+        if (!TryResolveBallReference())
+        {
+            return;
+        }
+
+        if (_currentControlled != null)
+        {
+            return;
+        }
+
+        var nearest = FindNearestAgentToBall();
+        if (nearest != null)
+        {
+            SwitchControlTo(nearest);
+        }
+    }
+
+    Transform FindNearestAgentToBall()
+    {
+        if (_allBlueAgents == null || _allBlueAgents.Length == 0 || ball == null)
+        {
+            return null;
+        }
+
+        Transform nearest = null;
+        float bestSqr = float.MaxValue;
+
+        foreach (var go in _allBlueAgents)
+        {
+            if (!go || !go.activeInHierarchy) continue;
+            float d2 = SqrDistXZ(go.transform, ball);
+            if (d2 < bestSqr)
+            {
+                bestSqr = d2;
+                nearest = go.transform;
+            }
+        }
+
+        return nearest;
+    }
+
+    static float SqrDistXZ(Transform tA, Transform tB)
+    {
+        if (tA == null || tB == null) return float.MaxValue;
+        Vector3 d = tA.position - tB.position;
+        d.y = 0f;
+        return d.sqrMagnitude;
     }
 }
