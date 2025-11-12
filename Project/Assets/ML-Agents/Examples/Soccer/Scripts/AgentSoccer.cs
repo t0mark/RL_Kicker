@@ -80,6 +80,9 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    [HideInInspector]
+    public bool manualOverride = false;
+
     public override void Initialize()
     {
         m_EnvController = GetComponentInParent<SoccerEnvController>();
@@ -183,6 +186,10 @@ public class AgentSoccer : Agent
     public override void OnActionReceived(ActionBuffers actionBuffers)
 
     {
+        if (manualOverride)
+        {
+            return;
+        }
 
         if (position == Position.Goalie)
         {
