@@ -196,8 +196,11 @@ public class SoccerPlayerController : MonoBehaviour
         m_LastKickTime = Time.time;
 
         // Kick in the direction the character is facing
+        // Add player's velocity to the kick for more distance when moving
         Vector3 kickDirection = transform.forward;
-        ReleaseBall(kickDirection * power);
+        Vector3 playerVelocity = m_Rb != null ? m_Rb.linearVelocity : Vector3.zero;
+
+        ReleaseBall(kickDirection * power, playerVelocity);
     }
 
     /// <summary>
@@ -294,7 +297,7 @@ public class SoccerPlayerController : MonoBehaviour
         m_BallRb.angularVelocity = Vector3.zero;
     }
 
-    void ReleaseBall(Vector3 force)
+    void ReleaseBall(Vector3 force, Vector3 velocityOffset = default)
     {
         CancelKickCharge();
         m_IsDribbling = false;
@@ -302,7 +305,16 @@ public class SoccerPlayerController : MonoBehaviour
         if (m_BallRb != null)
         {
             m_BallRb.useGravity = true;
+
+            // Reset velocity to zero first, then apply kick force + player velocity
+            // This makes the ball go further when player is moving
+            m_BallRb.linearVelocity = Vector3.zero;
             m_BallRb.AddForce(force, ForceMode.VelocityChange);
+
+            if (velocityOffset != Vector3.zero)
+            {
+                m_BallRb.AddForce(velocityOffset, ForceMode.VelocityChange);
+            }
 
             // Re-enable collision between ball and player after release
             Collider ballCollider = m_Ball.GetComponent<Collider>();
