@@ -13,9 +13,7 @@ public class SoccerPlayerController : MonoBehaviour
 
     [Header("Dribble Settings")]
     [SerializeField] float dribbleRange = 2f;
-    [SerializeField] float dribbleDistanceIdle = 1.5f;      // Distance when idle/slow
-    [SerializeField] float dribbleDistanceWalk = 2.0f;      // Distance when walking
-    [SerializeField] float dribbleDistanceSprint = 3.0f;    // Distance when sprinting
+    [SerializeField] float dribbleDistance = 2.5f;
     [SerializeField] float dribbleFollowSpeed = 15f;
     [SerializeField] float dribbleHeight = 0.5f;
 
@@ -256,33 +254,12 @@ public class SoccerPlayerController : MonoBehaviour
         // This ensures the ball follows direction changes immediately
         Vector3 movementDirection = transform.forward;
 
-        // Calculate player speed to select appropriate distance
+        // Calculate player speed for dynamic follow speed
         float playerSpeed = m_Rb.linearVelocity.magnitude;
-        float targetDistance;
-        float dynamicFollowSpeed;
-
-        // Select distance based on speed thresholds
-        if (playerSpeed < 3f)
-        {
-            // Idle/slow movement
-            targetDistance = dribbleDistanceIdle;
-            dynamicFollowSpeed = dribbleFollowSpeed;
-        }
-        else if (playerSpeed < 8f)
-        {
-            // Normal walking
-            targetDistance = dribbleDistanceWalk;
-            dynamicFollowSpeed = dribbleFollowSpeed + (playerSpeed * 0.5f);
-        }
-        else
-        {
-            // Sprinting
-            targetDistance = dribbleDistanceSprint;
-            dynamicFollowSpeed = dribbleFollowSpeed + (playerSpeed * 0.8f);
-        }
+        float dynamicFollowSpeed = dribbleFollowSpeed + (playerSpeed * 0.5f);
 
         // Calculate target position for the ball
-        Vector3 targetPosition = transform.position + movementDirection * targetDistance;
+        Vector3 targetPosition = transform.position + movementDirection * dribbleDistance;
         targetPosition.y = dribbleHeight;
 
         // Smoothly move the ball to target position
@@ -306,15 +283,9 @@ public class SoccerPlayerController : MonoBehaviour
         {
             m_BallRb.useGravity = true;
 
-            // Reset velocity to zero first, then apply kick force + player velocity
-            // This makes the ball go further when player is moving
-            m_BallRb.linearVelocity = Vector3.zero;
-            m_BallRb.AddForce(force, ForceMode.VelocityChange);
-
-            if (velocityOffset != Vector3.zero)
-            {
-                m_BallRb.AddForce(velocityOffset, ForceMode.VelocityChange);
-            }
+            // Directly set the ball's velocity = kick force + player velocity
+            // This ensures the player's movement is properly transferred to the ball
+            m_BallRb.linearVelocity = force + velocityOffset;
 
             // Re-enable collision between ball and player after release
             Collider ballCollider = m_Ball.GetComponent<Collider>();
