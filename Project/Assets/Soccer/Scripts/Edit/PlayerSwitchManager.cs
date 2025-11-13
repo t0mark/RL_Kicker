@@ -113,7 +113,6 @@ public class PlayerSwitchManager : MonoBehaviour
 
         var driver = newTarget.GetComponent<ManualController>();
         if (!driver) driver = newTarget.gameObject.AddComponent<ManualController>();
-        driver.ball = ball;
         driver.enabled = true;
 
         var tgtAg = newTarget.GetComponent<AgentSoccer>();

@@ -83,8 +83,10 @@ public class AgentSoccer : Agent
     [HideInInspector]
     public bool manualOverride = false;
 
-    // 드리블 컨트롤러 참조
-    DribbleController m_DribbleController;
+    // Player controller for shared behavior
+    SoccerPlayerController m_PlayerController;
+
+    public bool IsDribbling => m_PlayerController != null && m_PlayerController.IsDribbling;
 
     public override void Initialize()
     {
@@ -112,6 +114,15 @@ public class AgentSoccer : Agent
             rotSign = -1f;
         }
         CacheGoalReference();
+
+        // Initialize or get player controller
+        m_PlayerController = GetComponent<SoccerPlayerController>();
+        if (m_PlayerController == null)
+        {
+            m_PlayerController = gameObject.AddComponent<SoccerPlayerController>();
+        }
+
+        // Set speeds based on position
         if (position == Position.Goalie)
         {
             m_LateralSpeed = 1.0f;
@@ -132,14 +143,14 @@ public class AgentSoccer : Agent
             m_LateralSpeed = 0.3f;
             m_ForwardSpeed = 1.0f;
         }
+
+        m_PlayerController.SetSpeeds(m_LateralSpeed, m_ForwardSpeed);
+        m_PlayerController.SetTeam(team);
+
         m_SoccerSettings = FindFirstObjectByType<SoccerSettings>();
         agentRb = GetComponent<Rigidbody>();
-        agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
-
-        // 드리블 컨트롤러 초기화
-        m_DribbleController = GetComponent<DribbleController>();
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -159,14 +170,20 @@ public class AgentSoccer : Agent
                 dirToGo = transform.forward * m_ForwardSpeed;
                 m_KickPower = 1f;
 
-                // 드리블 중일 때 킥 실행
-                if (m_DribbleController != null && m_DribbleController.IsDribbling)
+                // Start kick charge when dribbling
+                if (m_PlayerController.IsDribbling && !m_PlayerController.IsChargingKick)
                 {
-                    m_DribbleController.KickWithPower(k_Power * m_KickPower);
+                    m_PlayerController.StartKickCharge();
                 }
                 break;
             case 2:
                 dirToGo = transform.forward * -m_ForwardSpeed;
+
+                // Execute kick if charging
+                if (m_PlayerController.IsChargingKick)
+                {
+                    m_PlayerController.ExecuteChargedKick();
+                }
                 break;
         }
 
@@ -190,9 +207,8 @@ public class AgentSoccer : Agent
                 break;
         }
 
-        transform.Rotate(rotateDir, Time.deltaTime * 100f);
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed,
-            ForceMode.VelocityChange);
+        m_PlayerController.Rotate(rotateDir, 100f);
+        m_PlayerController.Move(dirToGo, m_SoccerSettings.agentRunSpeed);
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -219,6 +235,9 @@ public class AgentSoccer : Agent
             AddReward(ComputeDefenderShapeReward());
         }
         MoveAgent(actionBuffers.DiscreteActions);
+
+        // Update dribble
+        m_PlayerController.UpdateDribble();
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -266,14 +285,16 @@ public class AgentSoccer : Agent
         {
             AddReward(.2f * m_BallTouch);
 
-            // 드리블 중이 아닐 때만 물리적으로 공을 밀기
-            if (m_DribbleController == null || !m_DribbleController.IsDribbling)
+            // Only physically push ball when not dribbling
+            if (!m_PlayerController.IsDribbling)
             {
                 var dir = c.contacts[0].point - transform.position;
                 dir = dir.normalized;
                 c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
             }
         }
+
+        // Tackle handling is now done in SoccerPlayerController
     }
 
     public override void OnEpisodeBegin()
