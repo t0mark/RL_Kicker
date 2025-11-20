@@ -397,6 +397,10 @@ public class SoccerPlayerController : MonoBehaviour
     {
         if (m_Animator == null || m_Rb == null)
         {
+            if (m_Animator == null)
+            {
+                Debug.LogWarning($"[SoccerPlayerController] m_Animator is null on {gameObject.name}!");
+            }
             return;
         }
 
@@ -413,6 +417,7 @@ public class SoccerPlayerController : MonoBehaviour
             ? planarVelocity.magnitude
             : planarVelocity.magnitude / movementSpeedReference;
 
+        Debug.Log($"[SoccerPlayerController] Updating animator on {gameObject.name}: forwardSpeed={forwardSpeed}, normalizedSpeed={normalizedSpeed}");
         TrySetFloat(forwardSpeedParameter, forwardSpeed);
         TrySetFloat(runSpeedParameter, Mathf.Clamp01(normalizedSpeed));
     }
