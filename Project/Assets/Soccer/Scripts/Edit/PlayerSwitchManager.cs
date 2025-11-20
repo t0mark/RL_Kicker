@@ -94,17 +94,18 @@ public class PlayerSwitchManager : MonoBehaviour
         {
             foreach (var go in _allBlueAgents)
             {
+                // Disable AI completely - make agents stationary
                 var dr = go.GetComponent<DecisionRequester>();
-                if (dr) dr.enabled = true;
+                if (dr) dr.enabled = false;
 
                 var bp = go.GetComponent<BehaviorParameters>();
-                if (bp) bp.BehaviorType = BehaviorType.InferenceOnly;
+                if (bp) bp.BehaviorType = BehaviorType.HeuristicOnly;
 
                 var drv = go.GetComponent<ManualController>();
                 if (drv) drv.enabled = false;
 
                 var ag = go.GetComponent<AgentSoccer>();
-                if (ag) ag.manualOverride = false;
+                if (ag) ag.manualOverride = true; // Prevent AI from taking over
             }
         }
 

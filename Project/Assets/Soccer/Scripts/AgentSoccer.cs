@@ -104,13 +104,13 @@ public class AgentSoccer : Agent
         if (m_BehaviorParameters.TeamId == (int)Team.Blue)
         {
             team = Team.Blue;
-            initialPos = new Vector3(transform.position.x - 5f, .5f, transform.position.z);
+            initialPos = transform.position; // 씬에서 설정한 위치 그대로 사용
             rotSign = 1f;
         }
         else
         {
             team = Team.Purple;
-            initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
+            initialPos = transform.position; // 씬에서 설정한 위치 그대로 사용
             rotSign = -1f;
         }
         CacheGoalReference();
@@ -242,6 +242,13 @@ public class AgentSoccer : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
+        // Heuristic 비활성화: manualOverride가 true일 때는 아무 행동도 하지 않음
+        // ManualController가 직접 제어하는 경우만 움직임
+        if (manualOverride)
+        {
+            return;
+        }
+
         var discreteActionsOut = actionsOut.DiscreteActions;
         //forward
         if (Input.GetKey(KeyCode.W))

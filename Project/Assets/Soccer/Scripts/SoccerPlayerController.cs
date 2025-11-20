@@ -13,7 +13,7 @@ public class SoccerPlayerController : MonoBehaviour
 
     [Header("Dribble Settings")]
     [SerializeField] float dribbleRange = 2f;
-    [SerializeField] float dribbleDistance = 2.5f;
+    [SerializeField] float dribbleDistance = 2.0f;
     [SerializeField] float dribbleFollowSpeed = 15f;
     [SerializeField] float dribbleHeight = 0.5f;
 
@@ -25,6 +25,14 @@ public class SoccerPlayerController : MonoBehaviour
 
     [Header("Tackle Settings")]
     [SerializeField] float tackleForce = 8f;
+
+    [Header("Animation Settings")]
+    [SerializeField] Animator m_Animator;
+    [SerializeField] string forwardSpeedParameter = "ForwardSpeed";
+    [SerializeField] string runSpeedParameter = "RunSpeedMult";
+    [SerializeField] string dribbleBoolParameter = "IsDribbling";
+    [SerializeField] string kickTriggerParameter = "Kick";
+    [SerializeField] float movementSpeedReference = 5f;
 
     // Components
     Rigidbody m_Rb;
@@ -52,6 +60,27 @@ public class SoccerPlayerController : MonoBehaviour
         m_Rb = GetComponent<Rigidbody>();
         m_Rb.maxAngularVelocity = 500;
 
+        // Try to find Animator component
+        if (m_Animator == null)
+        {
+            m_Animator = GetComponentInChildren<Animator>();
+        }
+
+        // Also try GetComponent if GetComponentInChildren fails
+        if (m_Animator == null)
+        {
+            m_Animator = GetComponent<Animator>();
+        }
+
+        if (m_Animator != null)
+        {
+            Debug.Log($"[SoccerPlayerController] Animator found on {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[SoccerPlayerController] No Animator component found on {gameObject.name} or its children. Animations will not play.");
+        }
+
         // Find ball
         var ballObj = GameObject.FindGameObjectWithTag("ball");
         if (ballObj != null)
@@ -66,6 +95,11 @@ public class SoccerPlayerController : MonoBehaviour
         {
             m_Team = agent.team;
         }
+    }
+
+    void Update()
+    {
+        UpdateAnimatorMovement();
     }
 
     void FixedUpdate()
@@ -199,6 +233,7 @@ public class SoccerPlayerController : MonoBehaviour
         Vector3 playerVelocity = m_Rb != null ? m_Rb.linearVelocity : Vector3.zero;
 
         ReleaseBall(kickDirection * power, playerVelocity);
+        TrySetTrigger(kickTriggerParameter);
     }
 
     /// <summary>
@@ -228,9 +263,36 @@ public class SoccerPlayerController : MonoBehaviour
         ReleaseBall(force);
     }
 
+    /// <summary>
+    /// Reset dribble state (used for scene reset)
+    /// </summary>
+    public void ResetDribbleState()
+    {
+        if (m_IsDribbling)
+        {
+            m_IsDribbling = false;
+            TrySetBool(dribbleBoolParameter, false);
+            CancelKickCharge();
+
+            // Re-enable collision and gravity
+            if (m_BallRb != null)
+            {
+                m_BallRb.useGravity = true;
+
+                Collider ballCollider = m_Ball.GetComponent<Collider>();
+                Collider playerCollider = m_Rb.GetComponent<Collider>();
+                if (ballCollider != null && playerCollider != null)
+                {
+                    Physics.IgnoreCollision(ballCollider, playerCollider, false);
+                }
+            }
+        }
+    }
+
     void StartDribble()
     {
         m_IsDribbling = true;
+        TrySetBool(dribbleBoolParameter, true);
 
         if (m_BallRb != null)
         {
@@ -278,6 +340,7 @@ public class SoccerPlayerController : MonoBehaviour
     {
         CancelKickCharge();
         m_IsDribbling = false;
+        TrySetBool(dribbleBoolParameter, false);
 
         if (m_BallRb != null)
         {
@@ -328,5 +391,74 @@ public class SoccerPlayerController : MonoBehaviour
         }
 
         return false;
+    }
+
+    void UpdateAnimatorMovement()
+    {
+        if (m_Animator == null || m_Rb == null)
+        {
+            return;
+        }
+
+        // Check if animator is enabled
+        if (!m_Animator.enabled)
+        {
+            Debug.LogWarning($"[SoccerPlayerController] Animator on {gameObject.name} is disabled!");
+            return;
+        }
+
+        var planarVelocity = new Vector3(m_Rb.linearVelocity.x, 0f, m_Rb.linearVelocity.z);
+        float forwardSpeed = Vector3.Dot(transform.forward, planarVelocity);
+        float normalizedSpeed = movementSpeedReference <= 0f
+            ? planarVelocity.magnitude
+            : planarVelocity.magnitude / movementSpeedReference;
+
+        TrySetFloat(forwardSpeedParameter, forwardSpeed);
+        TrySetFloat(runSpeedParameter, Mathf.Clamp01(normalizedSpeed));
+    }
+
+    void TrySetBool(string parameterName, bool value)
+    {
+        if (m_Animator != null && !string.IsNullOrEmpty(parameterName))
+        {
+            try
+            {
+                m_Animator.SetBool(parameterName, value);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[SoccerPlayerController] Failed to set bool parameter '{parameterName}' on {gameObject.name}: {e.Message}");
+            }
+        }
+    }
+
+    void TrySetTrigger(string parameterName)
+    {
+        if (m_Animator != null && !string.IsNullOrEmpty(parameterName))
+        {
+            try
+            {
+                m_Animator.SetTrigger(parameterName);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[SoccerPlayerController] Failed to set trigger parameter '{parameterName}' on {gameObject.name}: {e.Message}");
+            }
+        }
+    }
+
+    void TrySetFloat(string parameterName, float value)
+    {
+        if (m_Animator != null && !string.IsNullOrEmpty(parameterName))
+        {
+            try
+            {
+                m_Animator.SetFloat(parameterName, value);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[SoccerPlayerController] Failed to set float parameter '{parameterName}' on {gameObject.name}: {e.Message}");
+            }
+        }
     }
 }

@@ -113,7 +113,9 @@ public class SoccerEnvController : MonoBehaviour
                 m_PurpleAgentGroup.RegisterAgent(item.Agent);
             }
         }
-        ResetScene();
+        // ResetScene() 호출 제거 - 씬에서 설정한 초기 위치 유지
+        // 게임 시작 시 위치를 그대로 사용하려면 주석 처리
+        // ResetScene();
     }
 
     void FixedUpdate()
@@ -121,8 +123,14 @@ public class SoccerEnvController : MonoBehaviour
         m_ResetTimer += 1;
         if (m_ResetTimer >= MaxEnvironmentSteps && MaxEnvironmentSteps > 0)
         {
-            m_BlueAgentGroup.GroupEpisodeInterrupted();
-            m_PurpleAgentGroup.GroupEpisodeInterrupted();
+            if (m_BlueAgentGroup != null)
+            {
+                m_BlueAgentGroup.GroupEpisodeInterrupted();
+            }
+            if (m_PurpleAgentGroup != null)
+            {
+                m_PurpleAgentGroup.GroupEpisodeInterrupted();
+            }
             ResetScene();
         }
     }
@@ -130,35 +138,51 @@ public class SoccerEnvController : MonoBehaviour
 
     public virtual void ResetBall()
     {
-        var randomPosX = Random.Range(-m_BallSpawnJitter.x, m_BallSpawnJitter.x);
-        var randomPosZ = Random.Range(-m_BallSpawnJitter.y, m_BallSpawnJitter.y);
-
-        ball.transform.position = m_BallStartingPos + new Vector3(randomPosX, 0f, randomPosZ);
+        // 랜덤 지터 제거 - 씬에서 설정한 초기 위치로 정확히 복귀
+        ball.transform.position = m_BallStartingPos;
         ballRb.linearVelocity = Vector3.zero;
         ballRb.angularVelocity = Vector3.zero;
-
     }
 
     public virtual void GoalTouched(Team scoredTeam)
     {
         if (scoredTeam == Team.Blue)
         {
-            m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
-            m_PurpleAgentGroup.AddGroupReward(-1);
+            if (m_BlueAgentGroup != null)
+            {
+                m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
+            }
+            if (m_PurpleAgentGroup != null)
+            {
+                m_PurpleAgentGroup.AddGroupReward(-1);
+            }
             m_BlueScore++;
             RaiseScoreChanged();
         }
         else
         {
-            m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
-            m_BlueAgentGroup.AddGroupReward(-1);
+            if (m_PurpleAgentGroup != null)
+            {
+                m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
+            }
+            if (m_BlueAgentGroup != null)
+            {
+                m_BlueAgentGroup.AddGroupReward(-1);
+            }
             m_PurpleScore++;
             RaiseScoreChanged();
         }
-        m_PurpleAgentGroup.EndGroupEpisode();
-        m_BlueAgentGroup.EndGroupEpisode();
-        ResetScene();
 
+        if (m_PurpleAgentGroup != null)
+        {
+            m_PurpleAgentGroup.EndGroupEpisode();
+        }
+        if (m_BlueAgentGroup != null)
+        {
+            m_BlueAgentGroup.EndGroupEpisode();
+        }
+
+        ResetScene();
     }
 
 
@@ -166,19 +190,28 @@ public class SoccerEnvController : MonoBehaviour
     {
         m_ResetTimer = 0;
 
-        //Reset Agents
+        //Reset Agents - 씬에서 설정한 초기 위치로 복귀
         foreach (var item in AgentsList)
         {
-            var newStartPos = GetSpawnPosition(item);
-            var newRot = GetSpawnRotation(item);
-            item.Agent.transform.SetPositionAndRotation(newStartPos, newRot);
+            // 랜덤 위치 대신 StartingPos/StartingRot 사용
+            item.Agent.transform.SetPositionAndRotation(item.StartingPos, item.StartingRot);
 
             item.Rb.linearVelocity = Vector3.zero;
             item.Rb.angularVelocity = Vector3.zero;
+
+            // Reset dribble state
+            var playerController = item.Agent.GetComponent<SoccerPlayerController>();
+            if (playerController != null)
+            {
+                playerController.ResetDribbleState();
+            }
         }
 
-        //Reset Ball
-        ResetBall();
+        //Reset Ball - 씬에서 설정한 초기 위치로 복귀
+        ball.transform.position = m_BallStartingPos;
+        ballRb.linearVelocity = Vector3.zero;
+        ballRb.angularVelocity = Vector3.zero;
+        ballRb.useGravity = true; // 중력 다시 활성화
     }
 
     protected virtual Vector3 GetSpawnPosition(PlayerInfo player)
