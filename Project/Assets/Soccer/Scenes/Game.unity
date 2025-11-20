@@ -495,6 +495,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 1580997377133808333, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1685194386115603206, guid: efa2bc35b3712d647a5f4e7a63b55250,
         type: 3}
       propertyPath: m_BehaviorType
@@ -879,6 +884,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 6442033214468726651, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6443189753050768198, guid: efa2bc35b3712d647a5f4e7a63b55250,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -899,6 +909,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 6556018406274463539, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6802339058278537221, guid: efa2bc35b3712d647a5f4e7a63b55250,
         type: 3}
       propertyPath: m_Materials.Array.size
@@ -930,6 +945,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 7658143922919657860, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7764935280147995596, guid: efa2bc35b3712d647a5f4e7a63b55250,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -950,6 +970,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 7828803848760260198, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7874334028938696442, guid: efa2bc35b3712d647a5f4e7a63b55250,
         type: 3}
       propertyPath: m_Materials.Array.size
@@ -1077,6 +1102,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: b39bf5c552840907bbaffd8eeaead7f8, type: 2}
+    - target: {fileID: 8875496299594433937, guid: efa2bc35b3712d647a5f4e7a63b55250,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 581081810661596304, guid: efa2bc35b3712d647a5f4e7a63b55250, type: 3}
