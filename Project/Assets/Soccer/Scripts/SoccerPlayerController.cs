@@ -169,7 +169,11 @@ public class SoccerPlayerController : MonoBehaviour
     /// </summary>
     public void UpdateDribble()
     {
-        if (m_Ball == null) return;
+        if (m_Ball == null)
+        {
+            Debug.LogWarning($"[DRIBBLE] m_Ball is null on {gameObject.name}");
+            return;
+        }
 
         // Don't change dribble state while charging
         if (m_IsChargingKick) return;
@@ -186,10 +190,16 @@ public class SoccerPlayerController : MonoBehaviour
             float distanceToBall = Vector3.Distance(transform.position, m_Ball.position);
             if (distanceToBall <= dribbleRange)
             {
+                Debug.Log($"[DRIBBLE] {gameObject.name} in range! Distance: {distanceToBall}, checking if anyone else is dribbling...");
                 // Check if another player is already dribbling
                 if (!IsAnyoneElseDribbling())
                 {
+                    Debug.Log($"[DRIBBLE] No one else dribbling, starting dribble!");
                     StartDribble();
+                }
+                else
+                {
+                    Debug.Log($"[DRIBBLE] Someone else is already dribbling");
                 }
             }
         }
@@ -291,8 +301,10 @@ public class SoccerPlayerController : MonoBehaviour
 
     void StartDribble()
     {
+        Debug.Log($"[DRIBBLE] StartDribble called on {gameObject.name}");
         m_IsDribbling = true;
         TrySetBool(dribbleBoolParameter, true);
+        Debug.Log($"[DRIBBLE] IsDribbling set to true, parameter name: {dribbleBoolParameter}");
 
         if (m_BallRb != null)
         {
@@ -397,17 +409,12 @@ public class SoccerPlayerController : MonoBehaviour
     {
         if (m_Animator == null || m_Rb == null)
         {
-            if (m_Animator == null)
-            {
-                Debug.LogWarning($"[SoccerPlayerController] m_Animator is null on {gameObject.name}!");
-            }
             return;
         }
 
         // Check if animator is enabled
         if (!m_Animator.enabled)
         {
-            Debug.LogWarning($"[SoccerPlayerController] Animator on {gameObject.name} is disabled!");
             return;
         }
 
@@ -417,7 +424,6 @@ public class SoccerPlayerController : MonoBehaviour
             ? planarVelocity.magnitude
             : planarVelocity.magnitude / movementSpeedReference;
 
-        Debug.Log($"[SoccerPlayerController] Updating animator on {gameObject.name}: forwardSpeed={forwardSpeed}, normalizedSpeed={normalizedSpeed}");
         TrySetFloat(forwardSpeedParameter, forwardSpeed);
         TrySetFloat(runSpeedParameter, Mathf.Clamp01(normalizedSpeed));
     }

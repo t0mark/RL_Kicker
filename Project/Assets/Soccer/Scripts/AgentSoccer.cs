@@ -214,6 +214,9 @@ public class AgentSoccer : Agent
     public override void OnActionReceived(ActionBuffers actionBuffers)
 
     {
+        // Always update dribble even when manually controlled
+        m_PlayerController.UpdateDribble();
+
         if (manualOverride)
         {
             return;
@@ -235,9 +238,6 @@ public class AgentSoccer : Agent
             AddReward(ComputeDefenderShapeReward());
         }
         MoveAgent(actionBuffers.DiscreteActions);
-
-        // Update dribble
-        m_PlayerController.UpdateDribble();
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
