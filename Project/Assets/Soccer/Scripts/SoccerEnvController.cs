@@ -83,6 +83,9 @@ public class SoccerEnvController : MonoBehaviour
     private int m_PurpleScore;
     public int BlueScore => m_BlueScore;
     public int PurpleScore => m_PurpleScore;
+
+    public bool resetAllowed = false;
+
     void RaiseScoreChanged()
     {
         OnScoreChanged?.Invoke(m_BlueScore, m_PurpleScore);
@@ -164,6 +167,7 @@ public class SoccerEnvController : MonoBehaviour
 
     public virtual void ResetScene()
     {
+        if (!resetAllowed) return;
         m_ResetTimer = 0;
 
         //Reset Agents

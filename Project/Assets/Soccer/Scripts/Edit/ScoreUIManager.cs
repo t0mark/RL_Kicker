@@ -7,8 +7,11 @@ public class ScoreUIManager : MonoBehaviour
     public TextMeshProUGUI blueScore;
     public TextMeshProUGUI purpleScore;
 
-    [Header("Optional: 초기 표시용")]
-    public MonoBehaviour scoreSource;     // SoccerEnvController 드래그(없으면 자동 탐색 시도)
+    public MonoBehaviour scoreSource;
+
+    [Header("Fade Settings")]
+    public CanvasGroup canvasGroup;
+    public float fadeDuration = 1f;
 
     void OnEnable()
     {
@@ -43,5 +46,29 @@ public class ScoreUIManager : MonoBehaviour
         {
             OnScoreChanged(0, 0);
         }
+    }
+
+    public void ShowWithFade()
+    {
+        gameObject.SetActive(true);
+        StopAllCoroutines();
+        StartCoroutine(FadeInRoutine());
+    }
+
+    System.Collections.IEnumerator FadeInRoutine()
+    {
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+
+        float t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.deltaTime;
+            float normalized = Mathf.Clamp01(t / fadeDuration);
+            canvasGroup.alpha = Mathf.Lerp(0f, 1f, normalized);
+            yield return null;
+        }
+
+        canvasGroup.alpha = 1f;
     }
 }
