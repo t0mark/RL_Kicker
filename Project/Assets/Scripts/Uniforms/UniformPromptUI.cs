@@ -17,10 +17,26 @@ public class UniformPromptUI : MonoBehaviour
     public PromptUniformBridge bridge;
 
     bool _busy;
+    bool _initialized = false;
 
-    void Awake()
+    void Start()
     {
-        if (generateBtn != null) generateBtn.onClick.AddListener(OnClickGenerate);
+        if (!_initialized)
+        {
+            Initialize();
+        }
+    }
+
+    public void Initialize()
+    {
+        if (_initialized) return;
+        _initialized = true;
+
+        if (generateBtn != null)
+        {
+            generateBtn.onClick.AddListener(OnClickGenerate);
+        }
+
         if (loadingSpinner) loadingSpinner.SetActive(false);
         if (toastText) toastText.gameObject.SetActive(false);
     }
@@ -30,7 +46,11 @@ public class UniformPromptUI : MonoBehaviour
         if (_busy) return;
 
         var prompt = (inputPrompt ? inputPrompt.text : "").Trim();
-        if (string.IsNullOrEmpty(prompt)) { ShowToast("프롬프트를 입력해줘!"); return; }
+        if (string.IsNullOrEmpty(prompt))
+        {
+            ShowToast("프롬프트를 입력해줘!");
+            return;
+        }
 
         bool toBlue = (teamDropdown ? teamDropdown.value == 0 : true);
         float t = Mathf.Clamp(tilingSlider ? tilingSlider.value : 4f, 0.5f, 12f);
@@ -44,6 +64,15 @@ public class UniformPromptUI : MonoBehaviour
         _busy = true;
         if (generateBtn) generateBtn.interactable = false;
         if (loadingSpinner) loadingSpinner.SetActive(true);
+
+        if (bridge == null)
+        {
+            ShowToast("Bridge가 연결되지 않았습니다");
+            if (loadingSpinner) loadingSpinner.SetActive(false);
+            if (generateBtn) generateBtn.interactable = true;
+            _busy = false;
+            yield break;
+        }
 
         bool ok = false;
         yield return bridge.Co_GenerateAndApplySafe(prompt, toBlue, new Vector2(tiling, tiling), strength, success => ok = success);
