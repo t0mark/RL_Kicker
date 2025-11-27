@@ -267,6 +267,18 @@ public class SoccerEnvController : MonoBehaviour
     public float DefensiveMaxRadius => m_DefensiveMaxRadius;
     public IReadOnlyList<PlayerInfo> Players => AgentsList;
 
+    /// <summary>
+    /// Resets scores and repositions every player and the ball to their recorded starting point.
+    /// Useful when starting a brand-new match from the lobby.
+    /// </summary>
+    public void ResetMatchState()
+    {
+        m_BlueScore = 0;
+        m_PurpleScore = 0;
+        RaiseScoreChanged();
+        ResetScene();
+    }
+
     public void SetFieldHalfSize(Vector2 halfSize)
     {
         m_FieldHalfSize = halfSize;
