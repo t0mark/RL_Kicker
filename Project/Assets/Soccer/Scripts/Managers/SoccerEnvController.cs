@@ -173,6 +173,12 @@ public class SoccerEnvController : MonoBehaviour
             RaiseScoreChanged();
         }
 
+        var goalTransform = scoredTeam == Team.Blue ? m_PurpleGoal : m_BlueGoal;
+        if (goalTransform != null)
+        {
+            StadiumEffectEvents.RaiseGoalScored(scoredTeam, goalTransform.position);
+        }
+
         if (m_PurpleAgentGroup != null)
         {
             m_PurpleAgentGroup.EndGroupEpisode();

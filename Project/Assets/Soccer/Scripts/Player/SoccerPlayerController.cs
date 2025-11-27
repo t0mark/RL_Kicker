@@ -361,6 +361,10 @@ public class SoccerPlayerController : MonoBehaviour
             // Directly set the ball's velocity = kick force + player velocity
             // This ensures the player's movement is properly transferred to the ball
             m_BallRb.linearVelocity = force + velocityOffset;
+            if (m_Ball != null)
+            {
+                StadiumEffectEvents.RaiseBallKicked(m_Ball.position, m_Team);
+            }
 
             // Re-enable collision between ball and player after release
             Collider ballCollider = m_Ball.GetComponent<Collider>();
