@@ -26,6 +26,7 @@ public class UniformSystemBootstrap : MonoBehaviour
     private TeamUniformController uniformController;
     private PromptUniformBridge bridge;
     private UniformPromptUI promptUI;
+    private UniformUIScreenManager screenManager;
 
     private bool initialized = false;
 
@@ -73,7 +74,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         Transform existingPanel = null;
         foreach (Transform child in canvas.transform)
         {
-            if (child.name == "UniformGeneratorPanel")
+            if (child.name == "UniformUIScreens")
             {
                 existingPanel = child;
                 break;
@@ -156,7 +157,6 @@ public class UniformSystemBootstrap : MonoBehaviour
 
     void CreateUniformUI()
     {
-        // Canvas 찾기 - this가 Canvas에 붙어있으므로 직접 사용
         Canvas canvas = GetComponent<Canvas>();
         if (canvas == null)
         {
@@ -169,10 +169,9 @@ public class UniformSystemBootstrap : MonoBehaviour
             return;
         }
 
-        // 이미 존재하는지 다시 확인
         foreach (Transform child in canvas.transform)
         {
-            if (child.name == "UniformGeneratorPanel")
+            if (child.name == "UniformUIScreens")
             {
                 Debug.Log("[UniformBootstrap] UI already exists, skipping");
                 return;
@@ -181,25 +180,125 @@ public class UniformSystemBootstrap : MonoBehaviour
 
         Debug.Log($"[UniformBootstrap] Creating UI on Canvas: {canvas.name}");
 
-        // UI 패널 생성
+        GameObject root = new GameObject("UniformUIScreens");
+        RectTransform rootRect = root.AddComponent<RectTransform>();
+        rootRect.SetParent(canvas.transform, false);
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+
+        screenManager = root.AddComponent<UniformUIScreenManager>();
+
+        // ----- Lobby Screen -----
+        GameObject lobbyScreen = new GameObject("LobbyScreen");
+        RectTransform lobbyRect = lobbyScreen.AddComponent<RectTransform>();
+        lobbyRect.SetParent(root.transform, false);
+        lobbyRect.anchorMin = Vector2.zero;
+        lobbyRect.anchorMax = Vector2.one;
+        lobbyRect.offsetMin = Vector2.zero;
+        lobbyRect.offsetMax = Vector2.zero;
+        Image lobbyBg = lobbyScreen.AddComponent<Image>();
+        lobbyBg.color = new Color(0f, 0f, 0f, 0.7f);
+
+        GameObject lobbyContent = new GameObject("Content");
+        RectTransform lobbyContentRect = lobbyContent.AddComponent<RectTransform>();
+        lobbyContent.transform.SetParent(lobbyScreen.transform, false);
+        lobbyContentRect.anchorMin = new Vector2(0.5f, 0.5f);
+        lobbyContentRect.anchorMax = new Vector2(0.5f, 0.5f);
+        lobbyContentRect.pivot = new Vector2(0.5f, 0.5f);
+        lobbyContentRect.sizeDelta = new Vector2(420, 280);
+
+        VerticalLayoutGroup lobbyLayout = lobbyContent.AddComponent<VerticalLayoutGroup>();
+        lobbyLayout.padding = new RectOffset(15, 15, 15, 15);
+        lobbyLayout.spacing = 20;
+        lobbyLayout.childAlignment = TextAnchor.MiddleCenter;
+        lobbyLayout.childControlWidth = true;
+        lobbyLayout.childControlHeight = false;
+        lobbyLayout.childForceExpandWidth = true;
+        lobbyLayout.childForceExpandHeight = false;
+
+        GameObject lobbyTitle = CreateText(lobbyContent.transform, "Uniform Lobby", 28, TextAnchor.MiddleCenter);
+        LayoutElement lobbyTitleLayout = lobbyTitle.AddComponent<LayoutElement>();
+        lobbyTitleLayout.preferredHeight = 40;
+
+        GameObject lobbyDesc = CreateText(lobbyContent.transform, "시작할 기능을 선택하세요", 16, TextAnchor.MiddleCenter);
+        LayoutElement lobbyDescLayout = lobbyDesc.AddComponent<LayoutElement>();
+        lobbyDescLayout.preferredHeight = 24;
+
+        GameObject playBtnObj = CreateButton(lobbyContent.transform, "게임 플레이");
+        Button playBtn = playBtnObj.GetComponent<Button>();
+        LayoutElement playBtnLayout = playBtnObj.AddComponent<LayoutElement>();
+        playBtnLayout.preferredHeight = 45;
+
+        GameObject designBtnObj = CreateButton(lobbyContent.transform, "디자인 수정");
+        Button designBtn = designBtnObj.GetComponent<Button>();
+        LayoutElement designBtnLayout = designBtnObj.AddComponent<LayoutElement>();
+        designBtnLayout.preferredHeight = 45;
+
+        // ----- Game Screen -----
+        GameObject gameScreen = new GameObject("GameScreen");
+        RectTransform gameRect = gameScreen.AddComponent<RectTransform>();
+        gameRect.SetParent(root.transform, false);
+        gameRect.anchorMin = new Vector2(0, 1);
+        gameRect.anchorMax = new Vector2(0, 1);
+        gameRect.pivot = new Vector2(0, 1);
+        gameRect.anchoredPosition = new Vector2(20, -20);
+        gameRect.sizeDelta = new Vector2(260, 120);
+
+        Image gameBg = gameScreen.AddComponent<Image>();
+        gameBg.color = new Color(0f, 0f, 0f, 0.5f);
+
+        VerticalLayoutGroup gameLayout = gameScreen.AddComponent<VerticalLayoutGroup>();
+        gameLayout.padding = new RectOffset(15, 15, 15, 15);
+        gameLayout.spacing = 10;
+        gameLayout.childControlWidth = true;
+        gameLayout.childControlHeight = false;
+        gameLayout.childForceExpandWidth = true;
+        gameLayout.childForceExpandHeight = false;
+
+        GameObject gameText = CreateText(gameScreen.transform, "게임 진행 중", 18, TextAnchor.MiddleLeft);
+        LayoutElement gameTextLayout = gameText.AddComponent<LayoutElement>();
+        gameTextLayout.preferredHeight = 30;
+
+        GameObject gameBackBtnObj = CreateButton(gameScreen.transform, "로비로 돌아가기");
+        Button gameBackBtn = gameBackBtnObj.GetComponent<Button>();
+        LayoutElement gameBackLayout = gameBackBtnObj.AddComponent<LayoutElement>();
+        gameBackLayout.preferredHeight = 40;
+        gameScreen.SetActive(false);
+
+        // ----- Design Screen -----
+        GameObject designScreen = new GameObject("DesignScreen");
+        RectTransform designRect = designScreen.AddComponent<RectTransform>();
+        designRect.SetParent(root.transform, false);
+        designRect.anchorMin = Vector2.zero;
+        designRect.anchorMax = Vector2.one;
+        designRect.offsetMin = Vector2.zero;
+        designRect.offsetMax = Vector2.zero;
+        Image designBg = designScreen.AddComponent<Image>();
+        designBg.color = new Color(0f, 0f, 0f, 0.35f);
+
+        GameObject designBackBtnObj = CreateButton(designScreen.transform, "로비로 돌아가기");
+        RectTransform designBackRect = designBackBtnObj.GetComponent<RectTransform>();
+        designBackRect.anchorMin = new Vector2(1, 1);
+        designBackRect.anchorMax = new Vector2(1, 1);
+        designBackRect.pivot = new Vector2(1, 1);
+        designBackRect.anchoredPosition = new Vector2(-20, -20);
+        designBackRect.sizeDelta = new Vector2(200, 40);
+        Button designBackBtn = designBackBtnObj.GetComponent<Button>();
+
         GameObject panel = new GameObject("UniformGeneratorPanel");
         RectTransform panelRect = panel.AddComponent<RectTransform>();
-        panel.transform.SetParent(canvas.transform, false);
-
-        Debug.Log("[UniformBootstrap] Panel created and parented to Canvas");
-
-        // 패널 위치 및 크기 설정 (화면 좌측 상단)
+        panel.transform.SetParent(designScreen.transform, false);
         panelRect.anchorMin = new Vector2(0, 1);
         panelRect.anchorMax = new Vector2(0, 1);
         panelRect.pivot = new Vector2(0, 1);
-        panelRect.anchoredPosition = new Vector2(20, -20);
+        panelRect.anchoredPosition = new Vector2(20, -80);
         panelRect.sizeDelta = new Vector2(400, 350);
 
-        // 패널 배경
         Image panelBg = panel.AddComponent<Image>();
         panelBg.color = new Color(0.1f, 0.1f, 0.1f, 0.85f);
 
-        // 수직 레이아웃 그룹
         VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(15, 15, 15, 15);
         layout.spacing = 10;
@@ -208,56 +307,47 @@ public class UniformSystemBootstrap : MonoBehaviour
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
 
-        // 제목
         GameObject titleObj = CreateText(panel.transform, "Uniform Generator", 20, TextAnchor.MiddleCenter);
         LayoutElement titleLayout = titleObj.AddComponent<LayoutElement>();
         titleLayout.preferredHeight = 30;
 
-        // 프롬프트 입력
         GameObject inputObj = CreateInputField(panel.transform, "Enter prompt...");
         InputField inputPrompt = inputObj.GetComponent<InputField>();
         LayoutElement inputLayout = inputObj.AddComponent<LayoutElement>();
         inputLayout.preferredHeight = 35;
 
-        // 팀 선택 드롭다운
         GameObject dropdownObj = CreateDropdown(panel.transform, new string[] { "Blue Team", "Purple Team" });
         Dropdown teamDropdown = dropdownObj.GetComponent<Dropdown>();
         LayoutElement dropdownLayout = dropdownObj.AddComponent<LayoutElement>();
         dropdownLayout.preferredHeight = 35;
 
-        // Tiling 슬라이더
         GameObject tilingObj = CreateSlider(panel.transform, "Tiling", 0.5f, 12f, 4f);
         Slider tilingSlider = tilingObj.GetComponentInChildren<Slider>();
         LayoutElement tilingLayout = tilingObj.AddComponent<LayoutElement>();
         tilingLayout.preferredHeight = 40;
 
-        // Strength 슬라이더
         GameObject strengthObj = CreateSlider(panel.transform, "Strength", 0f, 1f, 1f);
         Slider strengthSlider = strengthObj.GetComponentInChildren<Slider>();
         LayoutElement strengthLayout = strengthObj.AddComponent<LayoutElement>();
         strengthLayout.preferredHeight = 40;
 
-        // Generate 버튼
         GameObject btnObj = CreateButton(panel.transform, "Generate Uniform");
         Button generateBtn = btnObj.GetComponent<Button>();
         LayoutElement btnLayout = btnObj.AddComponent<LayoutElement>();
         btnLayout.preferredHeight = 40;
 
-        // Loading Spinner (비활성화 상태로 시작)
         GameObject spinner = CreateText(panel.transform, "Loading...", 16, TextAnchor.MiddleCenter);
         spinner.SetActive(false);
 
-        // Toast 메시지 (비활성화 상태로 시작)
         GameObject toast = CreateText(panel.transform, "", 14, TextAnchor.MiddleCenter);
         toast.SetActive(false);
         Text toastText = toast.GetComponent<Text>();
+        designScreen.SetActive(false);
 
-        // UniformPromptUI 컴포넌트 추가 및 연결
         if (Application.isPlaying && bridge != null)
         {
             promptUI = panel.AddComponent<UniformPromptUI>();
 
-            // Reflection을 사용하여 필드 설정
             SetUIField("inputPrompt", inputPrompt);
             SetUIField("teamDropdown", teamDropdown);
             SetUIField("tilingSlider", tilingSlider);
@@ -267,8 +357,21 @@ public class UniformSystemBootstrap : MonoBehaviour
             SetUIField("toastText", toastText);
             SetUIField("bridge", bridge);
 
-            // 필드 설정 후 수동 초기화 (Awake는 컴포넌트 추가 직후 호출되므로 필드가 null일 수 있음)
             promptUI.Initialize();
+        }
+
+        screenManager.lobbyScreen = lobbyScreen;
+        screenManager.gameScreen = gameScreen;
+        screenManager.designScreen = designScreen;
+        screenManager.playButton = playBtn;
+        screenManager.designButton = designBtn;
+        screenManager.backFromGameButton = gameBackBtn;
+        screenManager.backFromDesignButton = designBackBtn;
+        screenManager.promptUI = promptUI;
+
+        if (Application.isPlaying)
+        {
+            screenManager.Initialize();
         }
     }
 
