@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,6 +33,10 @@ public class UniformUIScreenManager : MonoBehaviour
     ScreenState _currentState = ScreenState.Lobby;
     bool _pausedByManager;
     float _cachedTimeScale = 1f;
+
+    public static event Action<ScreenState> OnScreenStateChanged;
+
+    public ScreenState CurrentState => _currentState;
 
     void Start()
     {
@@ -88,5 +93,7 @@ public class UniformUIScreenManager : MonoBehaviour
             Time.timeScale = resumeScale <= 0f ? 1f : resumeScale;
             _pausedByManager = false;
         }
+
+        OnScreenStateChanged?.Invoke(_currentState);
     }
 }
