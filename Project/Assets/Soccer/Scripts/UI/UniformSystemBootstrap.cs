@@ -27,6 +27,12 @@ public class UniformSystemBootstrap : MonoBehaviour
     private PromptUniformBridge bridge;
     private UniformPromptUI promptUI;
     private UniformUIScreenManager screenManager;
+    private Sprite backArrowSprite;
+    private Sprite lobbySplashSprite;
+    private GameObject lobbyContentRoot;
+    private GameObject lobbySplashOverlay;
+    private Image lobbyDimOverlay;
+    private bool lobbyButtonsShown;
 
     private bool initialized = false;
 
@@ -38,6 +44,455 @@ public class UniformSystemBootstrap : MonoBehaviour
             InitializeUniformSystem();
             initialized = true;
         }
+    }
+
+    GameObject BuildLobbyScreen(Transform parent, out Button startBtn, out Button designBtn)
+    {
+        GameObject lobbyScreen = new GameObject("LobbyScreen");
+        RectTransform lobbyRect = lobbyScreen.AddComponent<RectTransform>();
+        lobbyRect.SetParent(parent, false);
+        lobbyRect.anchorMin = Vector2.zero;
+        lobbyRect.anchorMax = Vector2.one;
+        lobbyRect.offsetMin = Vector2.zero;
+        lobbyRect.offsetMax = Vector2.zero;
+
+        // Background splash image
+        GameObject bgImageObj = new GameObject("LobbyBackgroundImage");
+        RectTransform bgRect = bgImageObj.AddComponent<RectTransform>();
+        bgRect.SetParent(lobbyScreen.transform, false);
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.offsetMin = Vector2.zero;
+        bgRect.offsetMax = Vector2.zero;
+        Image bgImage = bgImageObj.AddComponent<Image>();
+        if (lobbySplashSprite != null)
+        {
+            bgImage.sprite = lobbySplashSprite;
+            bgImage.preserveAspect = true;
+            bgImage.color = Color.white;
+        }
+        else
+        {
+            bgImage.color = new Color(0.93f, 0.96f, 1f, 1f);
+        }
+
+        // Dim overlay (inactive until splash dismissed)
+        GameObject dimObj = new GameObject("LobbyDimmer");
+        RectTransform dimRect = dimObj.AddComponent<RectTransform>();
+        dimRect.SetParent(lobbyScreen.transform, false);
+        dimRect.anchorMin = Vector2.zero;
+        dimRect.anchorMax = Vector2.one;
+        dimRect.offsetMin = Vector2.zero;
+        dimRect.offsetMax = Vector2.zero;
+        lobbyDimOverlay = dimObj.AddComponent<Image>();
+        lobbyDimOverlay.color = new Color(0f, 0f, 0f, 0.35f);
+        lobbyDimOverlay.raycastTarget = false;
+        dimObj.SetActive(false);
+
+        // Content root (hidden until splash click)
+        lobbyContentRoot = new GameObject("LobbyContent");
+        RectTransform contentRect = lobbyContentRoot.AddComponent<RectTransform>();
+        contentRect.SetParent(lobbyScreen.transform, false);
+        contentRect.anchorMin = Vector2.zero;
+        contentRect.anchorMax = Vector2.one;
+        contentRect.offsetMin = Vector2.zero;
+        contentRect.offsetMax = Vector2.zero;
+        lobbyContentRoot.SetActive(false);
+
+        Transform contentParent = lobbyContentRoot.transform;
+
+        GameObject subtitle = CreateText(contentParent, "Select The Button", 28, TextAnchor.MiddleCenter, new Color(0.92f, 0.95f, 1f, 1f));
+        RectTransform subtitleRect = subtitle.GetComponent<RectTransform>();
+        subtitleRect.anchorMin = new Vector2(0.2f, 0.55f);
+        subtitleRect.anchorMax = new Vector2(0.8f, 0.68f);
+        subtitleRect.offsetMin = Vector2.zero;
+        subtitleRect.offsetMax = Vector2.zero;
+
+        GameObject cardContainer = new GameObject("LobbyCardRow");
+        RectTransform cardRect = cardContainer.AddComponent<RectTransform>();
+        cardRect.SetParent(contentParent, false);
+        cardRect.anchorMin = new Vector2(0.15f, 0.22f);
+        cardRect.anchorMax = new Vector2(0.85f, 0.52f);
+        cardRect.offsetMin = Vector2.zero;
+        cardRect.offsetMax = Vector2.zero;
+
+        HorizontalLayoutGroup grid = cardContainer.AddComponent<HorizontalLayoutGroup>();
+        grid.spacing = 40;
+        grid.childAlignment = TextAnchor.MiddleCenter;
+        grid.childControlWidth = true;
+        grid.childControlHeight = true;
+        grid.childForceExpandWidth = true;
+        grid.childForceExpandHeight = false;
+
+        GameObject startOption = CreateLobbyOption(cardContainer.transform, "빠른 경기", "즉시 플레이를 시작합니다", "START", out startBtn);
+        LayoutElement startLayout = startOption.AddComponent<LayoutElement>();
+        startLayout.preferredHeight = 200;
+        startLayout.flexibleWidth = 1f;
+
+        GameObject characterOption = CreateLobbyOption(cardContainer.transform, "디자인 수정", "캐릭터의 유니폼을 꾸며보세요", "CHARACTER", out designBtn);
+        LayoutElement charLayout = characterOption.AddComponent<LayoutElement>();
+        charLayout.preferredHeight = 200;
+        charLayout.flexibleWidth = 1f;
+        // Splash overlay with Touch Screen prompt
+        lobbySplashOverlay = new GameObject("LobbySplashOverlay");
+        RectTransform overlayRect = lobbySplashOverlay.AddComponent<RectTransform>();
+        overlayRect.SetParent(lobbyScreen.transform, false);
+        overlayRect.anchorMin = Vector2.zero;
+        overlayRect.anchorMax = Vector2.one;
+        overlayRect.offsetMin = Vector2.zero;
+        overlayRect.offsetMax = Vector2.zero;
+        Image overlayImg = lobbySplashOverlay.AddComponent<Image>();
+        overlayImg.color = new Color(0f, 0f, 0f, 0f);
+        Button splashButton = lobbySplashOverlay.AddComponent<Button>();
+        splashButton.targetGraphic = overlayImg;
+        splashButton.transition = Selectable.Transition.None;
+        splashButton.onClick.AddListener(OnLobbySplashClicked);
+
+        GameObject touchText = CreateText(lobbySplashOverlay.transform, "Touch Screen", 32, TextAnchor.MiddleCenter, Color.white);
+        RectTransform touchRect = touchText.GetComponent<RectTransform>();
+        touchRect.anchorMin = new Vector2(0.3f, 0.08f);
+        touchRect.anchorMax = new Vector2(0.7f, 0.16f);
+        touchRect.offsetMin = Vector2.zero;
+        touchRect.offsetMax = Vector2.zero;
+
+        return lobbyScreen;
+    }
+
+    GameObject BuildGameScreen(Transform parent, out Button backBtn)
+    {
+        GameObject gameScreen = new GameObject("GameScreen");
+        RectTransform rect = gameScreen.AddComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(30, -30);
+        rect.sizeDelta = Vector2.zero;
+
+        float backSize = 96f;
+        GameObject backBtnObj = CreateBackIconButton(gameScreen.transform, backSize);
+        RectTransform backRect = backBtnObj.GetComponent<RectTransform>();
+        backRect.anchorMin = new Vector2(0, 1);
+        backRect.anchorMax = new Vector2(0, 1);
+        backRect.pivot = new Vector2(0, 1);
+        backRect.anchoredPosition = Vector2.zero;
+        backRect.sizeDelta = new Vector2(backSize, backSize);
+        backBtn = backBtnObj.GetComponent<Button>();
+        gameScreen.SetActive(false);
+
+        return gameScreen;
+    }
+
+    GameObject BuildDesignScreen(Transform parent, out InputField inputPrompt, out Slider tilingSlider,
+        out Slider strengthSlider, out GameObject spinner, out Text toastText, out Button backBtn, out Dropdown teamDropdown)
+    {
+        GameObject designScreen = new GameObject("DesignScreen");
+        RectTransform rect = designScreen.AddComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        Image bg = designScreen.AddComponent<Image>();
+        bg.color = new Color(0.97f, 0.98f, 1f, 0.96f);
+        ApplyOutline(bg, 2f);
+
+        GameObject designAccent = new GameObject("DesignAccent");
+        RectTransform designAccentRect = designAccent.AddComponent<RectTransform>();
+        designAccentRect.SetParent(designScreen.transform, false);
+        designAccentRect.anchorMin = new Vector2(0, 0.9f);
+        designAccentRect.anchorMax = new Vector2(1, 1);
+        designAccentRect.offsetMin = Vector2.zero;
+        designAccentRect.offsetMax = Vector2.zero;
+        Image designAccentImg = designAccent.AddComponent<Image>();
+        designAccentImg.color = new Color(0.39f, 0.56f, 0.96f, 0.12f);
+
+        GameObject cornerAccent = new GameObject("CornerAccent");
+        RectTransform cornerRect = cornerAccent.AddComponent<RectTransform>();
+        cornerRect.SetParent(designScreen.transform, false);
+        cornerRect.anchorMin = new Vector2(0, 0);
+        cornerRect.anchorMax = new Vector2(0.3f, 0.18f);
+        cornerRect.offsetMin = Vector2.zero;
+        cornerRect.offsetMax = Vector2.zero;
+        Image cornerImg = cornerAccent.AddComponent<Image>();
+        cornerImg.color = new Color(0.83f, 0.9f, 1f, 0.35f);
+
+        GameObject designHeading = CreateText(designScreen.transform, "Design Studio", 34, TextAnchor.UpperLeft, new Color(0.12f, 0.18f, 0.35f, 1f));
+        RectTransform headingRect = designHeading.GetComponent<RectTransform>();
+        headingRect.anchorMin = new Vector2(0.06f, 0.9f);
+        headingRect.anchorMax = new Vector2(0.6f, 0.97f);
+        headingRect.offsetMin = Vector2.zero;
+        headingRect.offsetMax = Vector2.zero;
+
+        GameObject boardLabel = CreateText(designScreen.transform, "유니폼 스케치", 20, TextAnchor.LowerLeft, new Color(0.25f, 0.3f, 0.45f, 1f));
+        RectTransform boardLabelRect = boardLabel.GetComponent<RectTransform>();
+        boardLabelRect.anchorMin = new Vector2(0.08f, 0.86f);
+        boardLabelRect.anchorMax = new Vector2(0.4f, 0.9f);
+        boardLabelRect.offsetMin = Vector2.zero;
+        boardLabelRect.offsetMax = Vector2.zero;
+
+        GameObject board = new GameObject("SketchBoard");
+        RectTransform boardRect = board.AddComponent<RectTransform>();
+        boardRect.SetParent(designScreen.transform, false);
+        boardRect.anchorMin = new Vector2(0.07f, 0.28f);
+        boardRect.anchorMax = new Vector2(0.78f, 0.82f);
+        boardRect.offsetMin = Vector2.zero;
+        boardRect.offsetMax = Vector2.zero;
+
+        Image boardImg = board.AddComponent<Image>();
+        boardImg.color = new Color(1f, 1f, 1f, 0.95f);
+        ApplyOutline(boardImg, 1.5f);
+        ApplyShadow(boardImg, new Vector2(3, -3), 0.25f);
+
+        GameObject row = new GameObject("SketchRow");
+        RectTransform rowRect = row.AddComponent<RectTransform>();
+        rowRect.SetParent(board.transform, false);
+        rowRect.anchorMin = new Vector2(0.05f, 0.1f);
+        rowRect.anchorMax = new Vector2(0.95f, 0.9f);
+        rowRect.offsetMin = Vector2.zero;
+        rowRect.offsetMax = Vector2.zero;
+
+        HorizontalLayoutGroup rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+        rowLayout.spacing = 40;
+        rowLayout.childAlignment = TextAnchor.LowerCenter;
+        rowLayout.childControlWidth = true;
+        rowLayout.childControlHeight = false;
+        rowLayout.childForceExpandHeight = false;
+
+        CreateSketchColumn(row.transform, "캐릭터", UISketchFactory.CreateCharacterSketch());
+        CreateSketchColumn(row.transform, "상의", UISketchFactory.CreateShirtSketch());
+        CreateSketchColumn(row.transform, "하의", UISketchFactory.CreatePantsSketch());
+
+        GameObject boardHint = CreateText(board.transform, "왼쪽부터 캐릭터, 상의, 하의 재질을 미리 살펴볼 수 있어요.", 16, TextAnchor.MiddleCenter, new Color(0.32f, 0.36f, 0.48f, 1f));
+        RectTransform boardHintRect = boardHint.GetComponent<RectTransform>();
+        boardHintRect.anchorMin = new Vector2(0.05f, 0);
+        boardHintRect.anchorMax = new Vector2(0.95f, 0.15f);
+        boardHintRect.offsetMin = Vector2.zero;
+        boardHintRect.offsetMax = Vector2.zero;
+
+        GameObject promptStrip = new GameObject("PromptStrip");
+        RectTransform promptStripRect = promptStrip.AddComponent<RectTransform>();
+        promptStripRect.SetParent(designScreen.transform, false);
+        promptStripRect.anchorMin = new Vector2(0.06f, 0.14f);
+        promptStripRect.anchorMax = new Vector2(0.8f, 0.22f);
+        promptStripRect.offsetMin = Vector2.zero;
+        promptStripRect.offsetMax = Vector2.zero;
+        Image promptStripImg = promptStrip.AddComponent<Image>();
+        promptStripImg.color = new Color(0.78f, 0.86f, 1f, 0.6f);
+
+        GameObject inputObj = CreateInputField(designScreen.transform, "프롬프트 입력");
+        inputPrompt = inputObj.GetComponent<InputField>();
+        RectTransform inputRect = inputObj.GetComponent<RectTransform>();
+        inputRect.anchorMin = new Vector2(0.08f, 0.15f);
+        inputRect.anchorMax = new Vector2(0.78f, 0.21f);
+        inputRect.offsetMin = Vector2.zero;
+        inputRect.offsetMax = Vector2.zero;
+        ApplyOutline(inputObj.GetComponent<Image>(), 1.5f);
+
+        GameObject sliderPanel = new GameObject("ControlPanel");
+        RectTransform sliderRect = sliderPanel.AddComponent<RectTransform>();
+        sliderRect.SetParent(designScreen.transform, false);
+        sliderRect.anchorMin = new Vector2(0.8f, 0.15f);
+        sliderRect.anchorMax = new Vector2(0.95f, 0.38f);
+        sliderRect.offsetMin = Vector2.zero;
+        sliderRect.offsetMax = Vector2.zero;
+
+        Image sliderBg = sliderPanel.AddComponent<Image>();
+        sliderBg.color = new Color(0.98f, 0.98f, 1f, 0.95f);
+        ApplyOutline(sliderBg, 1.5f);
+
+        VerticalLayoutGroup sliderLayout = sliderPanel.AddComponent<VerticalLayoutGroup>();
+        sliderLayout.padding = new RectOffset(15, 15, 15, 15);
+        sliderLayout.spacing = 15;
+        sliderLayout.childAlignment = TextAnchor.UpperLeft;
+        sliderLayout.childControlWidth = true;
+        sliderLayout.childForceExpandHeight = false;
+
+        GameObject sliderTitle = CreateText(sliderPanel.transform, "세부 옵션", 20, TextAnchor.UpperLeft, new Color(0.2f, 0.26f, 0.45f, 1f));
+        LayoutElement sliderTitleLayout = sliderTitle.AddComponent<LayoutElement>();
+        sliderTitleLayout.preferredHeight = 28;
+
+        GameObject tilingObj = CreateSlider(sliderPanel.transform, "Tiling", 0.5f, 12f, 4f);
+        LayoutElement tilingLayout = tilingObj.AddComponent<LayoutElement>();
+        tilingLayout.preferredHeight = 60;
+        tilingSlider = tilingObj.GetComponentInChildren<Slider>();
+
+        GameObject strengthObj = CreateSlider(sliderPanel.transform, "Strength", 0f, 1f, 1f);
+        LayoutElement strengthLayout = strengthObj.AddComponent<LayoutElement>();
+        strengthLayout.preferredHeight = 60;
+        strengthSlider = strengthObj.GetComponentInChildren<Slider>();
+
+        GameObject sliderHint = CreateText(sliderPanel.transform, "옵션을 조절한 뒤 프롬프트를 입력하면 새로운 패턴을 적용합니다.", 14, TextAnchor.UpperLeft, new Color(0.32f, 0.36f, 0.48f, 1f));
+        LayoutElement sliderHintLayout = sliderHint.AddComponent<LayoutElement>();
+        sliderHintLayout.preferredHeight = 34;
+
+        GameObject spinnerObj = CreateText(designScreen.transform, "로딩 중...", 18, TextAnchor.MiddleCenter, Color.black);
+        RectTransform spinnerRect = spinnerObj.GetComponent<RectTransform>();
+        spinnerRect.anchorMin = spinnerRect.anchorMax = new Vector2(0.5f, 0.5f);
+        spinnerRect.sizeDelta = new Vector2(200, 40);
+        spinnerObj.SetActive(false);
+        spinner = spinnerObj;
+
+        GameObject toastObj = CreateText(designScreen.transform, "", 16, TextAnchor.MiddleCenter, Color.black);
+        RectTransform toastRect = toastObj.GetComponent<RectTransform>();
+        toastRect.anchorMin = new Vector2(0.3f, 0.03f);
+        toastRect.anchorMax = new Vector2(0.7f, 0.08f);
+        toastRect.offsetMin = Vector2.zero;
+        toastRect.offsetMax = Vector2.zero;
+        toastObj.SetActive(false);
+        toastText = toastObj.GetComponent<Text>();
+
+        GameObject backBtnObj = CreateButton(designScreen.transform, "로비");
+        RectTransform backRect = backBtnObj.GetComponent<RectTransform>();
+        backRect.anchorMin = new Vector2(0.92f, 0.9f);
+        backRect.anchorMax = new Vector2(0.98f, 0.97f);
+        backRect.offsetMin = Vector2.zero;
+        backRect.offsetMax = Vector2.zero;
+        SetupSketchButton(backBtnObj);
+        backBtn = backBtnObj.GetComponent<Button>();
+
+        GameObject dropdownObj = CreateDropdown(designScreen.transform, new string[] { "Blue Team", "Purple Team" });
+        teamDropdown = dropdownObj.GetComponent<Dropdown>();
+        teamDropdown.value = 0;
+        RectTransform dropdownRect = dropdownObj.GetComponent<RectTransform>();
+        dropdownRect.anchorMin = new Vector2(1.1f, 1.1f); // move off-screen
+        dropdownRect.anchorMax = dropdownRect.anchorMin;
+        dropdownRect.sizeDelta = Vector2.zero;
+        var cg = dropdownObj.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.interactable = false;
+        cg.blocksRaycasts = false;
+
+        designScreen.SetActive(false);
+        return designScreen;
+    }
+
+    void CreateSketchColumn(Transform parent, string title, Sprite sprite)
+    {
+        GameObject column = new GameObject($"{title}Column");
+        column.transform.SetParent(parent, false);
+
+        VerticalLayoutGroup layout = column.AddComponent<VerticalLayoutGroup>();
+        layout.spacing = 10;
+        layout.childAlignment = TextAnchor.UpperCenter;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+
+        GameObject label = CreateText(column.transform, title, 24, TextAnchor.MiddleCenter, Color.black);
+        LayoutElement labelLayout = label.AddComponent<LayoutElement>();
+        labelLayout.preferredHeight = 40;
+
+        GameObject card = new GameObject($"{title}Card");
+        RectTransform cardRect = card.AddComponent<RectTransform>();
+        card.transform.SetParent(column.transform, false);
+        cardRect.sizeDelta = new Vector2(240, 260);
+        Image cardBg = card.AddComponent<Image>();
+        cardBg.color = new Color(0.97f, 0.98f, 1f, 0.95f);
+        ApplyOutline(cardBg, 1.1f);
+        ApplyShadow(cardBg, new Vector2(2, -2), 0.3f);
+
+        GameObject sketch = new GameObject($"{title}Sketch");
+        RectTransform sketchRect = sketch.AddComponent<RectTransform>();
+        sketch.transform.SetParent(card.transform, false);
+        sketchRect.anchorMin = new Vector2(0.1f, 0.1f);
+        sketchRect.anchorMax = new Vector2(0.9f, 0.9f);
+        sketchRect.offsetMin = Vector2.zero;
+        sketchRect.offsetMax = Vector2.zero;
+
+        Image img = sketch.AddComponent<Image>();
+        img.sprite = sprite;
+        img.color = new Color(1f, 1f, 1f, 1f);
+        img.preserveAspect = true;
+    }
+
+    void SetupSketchButton(GameObject buttonObj)
+    {
+        if (buttonObj == null) return;
+        Image img = buttonObj.GetComponent<Image>();
+        if (img != null)
+        {
+            img.color = new Color(0.99f, 0.99f, 1f, 0.95f);
+            ApplyOutline(img, 1.5f);
+            ApplyShadow(img, new Vector2(2f, -2f), 0.25f);
+        }
+
+        Text txt = buttonObj.GetComponentInChildren<Text>();
+        if (txt != null)
+        {
+            txt.color = new Color(0.1f, 0.16f, 0.34f, 1f);
+            txt.fontSize = 28;
+        }
+    }
+
+    GameObject CreateBackIconButton(Transform parent, float size = 64f)
+    {
+        GameObject obj = new GameObject("Button_Back");
+        obj.transform.SetParent(parent, false);
+
+        RectTransform rect = obj.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(size, size);
+
+        Image img = obj.AddComponent<Image>();
+        img.color = Color.white;
+        img.preserveAspect = true;
+        if (backArrowSprite != null)
+        {
+            img.sprite = backArrowSprite;
+        }
+        else
+        {
+            GameObject fallbackObj = CreateText(obj.transform, "←", 28, TextAnchor.MiddleCenter, Color.black);
+            RectTransform fallbackRect = fallbackObj.GetComponent<RectTransform>();
+            fallbackRect.anchorMin = Vector2.zero;
+            fallbackRect.anchorMax = Vector2.one;
+            fallbackRect.offsetMin = Vector2.zero;
+            fallbackRect.offsetMax = Vector2.zero;
+        }
+
+        Button btn = obj.AddComponent<Button>();
+        btn.targetGraphic = img;
+
+        ApplyOutline(img, 1f);
+        ApplyShadow(img, new Vector2(1.5f, -1.5f), 0.25f);
+
+        return obj;
+    }
+
+    void ApplyOutline(Graphic graphic, float distance)
+    {
+        if (graphic == null) return;
+        Outline outline = graphic.GetComponent<Outline>();
+        if (outline == null)
+        {
+            outline = graphic.gameObject.AddComponent<Outline>();
+        }
+
+        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+        outline.effectDistance = new Vector2(distance, -distance);
+    }
+
+    void ApplyShadow(Graphic graphic, Vector2 offset, float alpha = 0.45f)
+    {
+        if (graphic == null) return;
+        Shadow shadow = null;
+        var shadows = graphic.GetComponents<Shadow>();
+        foreach (var s in shadows)
+        {
+            if (!(s is Outline))
+            {
+                shadow = s;
+                break;
+            }
+        }
+
+        if (shadow == null)
+        {
+            shadow = graphic.gameObject.AddComponent<Shadow>();
+        }
+
+        shadow.effectColor = new Color(0f, 0f, 0f, alpha);
+        shadow.effectDistance = offset;
     }
 
     void Start()
@@ -168,17 +623,62 @@ public class UniformSystemBootstrap : MonoBehaviour
             Debug.LogWarning("[UniformBootstrap] Canvas not found, UI creation skipped");
             return;
         }
+        else
+        {
+            // 기존 패널이 남아 있다면 제거하여 새 UI만 노출
+            Transform legacyPanel = canvas.transform.Find("UniformGeneratorPanel");
+            if (legacyPanel != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(legacyPanel.gameObject);
+                else
+                    DestroyImmediate(legacyPanel.gameObject);
+                Debug.Log("[UniformBootstrap] Legacy UniformGeneratorPanel removed.");
+            }
+        }
 
+        Transform existingScreens = null;
         foreach (Transform child in canvas.transform)
         {
             if (child.name == "UniformUIScreens")
             {
-                Debug.Log("[UniformBootstrap] UI already exists, skipping");
-                return;
+                existingScreens = child;
+                break;
             }
+        }
+        if (existingScreens != null)
+        {
+            if (Application.isPlaying)
+                Destroy(existingScreens.gameObject);
+            else
+                DestroyImmediate(existingScreens.gameObject);
+            Debug.Log("[UniformBootstrap] Previous UniformUIScreens removed for rebuild.");
         }
 
         Debug.Log($"[UniformBootstrap] Creating UI on Canvas: {canvas.name}");
+
+        lobbyButtonsShown = false;
+        lobbyContentRoot = null;
+        lobbySplashOverlay = null;
+        lobbyDimOverlay = null;
+
+        if (backArrowSprite == null)
+        {
+            backArrowSprite = Resources.Load<Sprite>("UI/BackArrow");
+            if (backArrowSprite == null)
+            {
+                Debug.LogWarning("[UniformBootstrap] BackArrow sprite not found in Resources/UI. Using text fallback.");
+            }
+        }
+
+        if (lobbySplashSprite == null)
+        {
+            lobbySplashSprite = Resources.Load<Sprite>("UI/LobbySplash");
+            if (lobbySplashSprite == null)
+            {
+                Debug.LogWarning("[UniformBootstrap] LobbySplash sprite not found in Resources/UI. Using solid color background.");
+            }
+        }
 
         GameObject root = new GameObject("UniformUIScreens");
         RectTransform rootRect = root.AddComponent<RectTransform>();
@@ -190,169 +690,36 @@ public class UniformSystemBootstrap : MonoBehaviour
 
         screenManager = root.AddComponent<UniformUIScreenManager>();
 
-        // ----- Lobby Screen -----
-        GameObject lobbyScreen = new GameObject("LobbyScreen");
-        RectTransform lobbyRect = lobbyScreen.AddComponent<RectTransform>();
-        lobbyRect.SetParent(root.transform, false);
-        lobbyRect.anchorMin = Vector2.zero;
-        lobbyRect.anchorMax = Vector2.one;
-        lobbyRect.offsetMin = Vector2.zero;
-        lobbyRect.offsetMax = Vector2.zero;
-        Image lobbyBg = lobbyScreen.AddComponent<Image>();
-        lobbyBg.color = new Color(0f, 0f, 0f, 0.7f);
+        Button lobbyStartBtn;
+        Button lobbyDesignBtn;
+        GameObject lobbyScreen = BuildLobbyScreen(root.transform, out lobbyStartBtn, out lobbyDesignBtn);
 
-        GameObject lobbyContent = new GameObject("Content");
-        RectTransform lobbyContentRect = lobbyContent.AddComponent<RectTransform>();
-        lobbyContent.transform.SetParent(lobbyScreen.transform, false);
-        lobbyContentRect.anchorMin = new Vector2(0.5f, 0.5f);
-        lobbyContentRect.anchorMax = new Vector2(0.5f, 0.5f);
-        lobbyContentRect.pivot = new Vector2(0.5f, 0.5f);
-        lobbyContentRect.sizeDelta = new Vector2(420, 280);
+        Button gameBackBtn;
+        GameObject gameScreen = BuildGameScreen(root.transform, out gameBackBtn);
 
-        VerticalLayoutGroup lobbyLayout = lobbyContent.AddComponent<VerticalLayoutGroup>();
-        lobbyLayout.padding = new RectOffset(15, 15, 15, 15);
-        lobbyLayout.spacing = 20;
-        lobbyLayout.childAlignment = TextAnchor.MiddleCenter;
-        lobbyLayout.childControlWidth = true;
-        lobbyLayout.childControlHeight = false;
-        lobbyLayout.childForceExpandWidth = true;
-        lobbyLayout.childForceExpandHeight = false;
+        InputField inputPrompt;
+        Slider tilingSlider;
+        Slider strengthSlider;
+        GameObject spinner;
+        Text toastText;
+        Button designBackBtn;
+        Dropdown teamDropdown;
 
-        GameObject lobbyTitle = CreateText(lobbyContent.transform, "Uniform Lobby", 28, TextAnchor.MiddleCenter);
-        LayoutElement lobbyTitleLayout = lobbyTitle.AddComponent<LayoutElement>();
-        lobbyTitleLayout.preferredHeight = 40;
+        GameObject designScreen = BuildDesignScreen(root.transform, out inputPrompt, out tilingSlider,
+            out strengthSlider, out spinner, out toastText, out designBackBtn, out teamDropdown);
 
-        GameObject lobbyDesc = CreateText(lobbyContent.transform, "시작할 기능을 선택하세요", 16, TextAnchor.MiddleCenter);
-        LayoutElement lobbyDescLayout = lobbyDesc.AddComponent<LayoutElement>();
-        lobbyDescLayout.preferredHeight = 24;
-
-        GameObject playBtnObj = CreateButton(lobbyContent.transform, "게임 플레이");
-        Button playBtn = playBtnObj.GetComponent<Button>();
-        LayoutElement playBtnLayout = playBtnObj.AddComponent<LayoutElement>();
-        playBtnLayout.preferredHeight = 45;
-
-        GameObject designBtnObj = CreateButton(lobbyContent.transform, "디자인 수정");
-        Button designBtn = designBtnObj.GetComponent<Button>();
-        LayoutElement designBtnLayout = designBtnObj.AddComponent<LayoutElement>();
-        designBtnLayout.preferredHeight = 45;
-
-        // ----- Game Screen -----
-        GameObject gameScreen = new GameObject("GameScreen");
-        RectTransform gameRect = gameScreen.AddComponent<RectTransform>();
-        gameRect.SetParent(root.transform, false);
-        gameRect.anchorMin = new Vector2(0, 1);
-        gameRect.anchorMax = new Vector2(0, 1);
-        gameRect.pivot = new Vector2(0, 1);
-        gameRect.anchoredPosition = new Vector2(20, -20);
-        gameRect.sizeDelta = new Vector2(260, 120);
-
-        Image gameBg = gameScreen.AddComponent<Image>();
-        gameBg.color = new Color(0f, 0f, 0f, 0.5f);
-
-        VerticalLayoutGroup gameLayout = gameScreen.AddComponent<VerticalLayoutGroup>();
-        gameLayout.padding = new RectOffset(15, 15, 15, 15);
-        gameLayout.spacing = 10;
-        gameLayout.childControlWidth = true;
-        gameLayout.childControlHeight = false;
-        gameLayout.childForceExpandWidth = true;
-        gameLayout.childForceExpandHeight = false;
-
-        GameObject gameText = CreateText(gameScreen.transform, "게임 진행 중", 18, TextAnchor.MiddleLeft);
-        LayoutElement gameTextLayout = gameText.AddComponent<LayoutElement>();
-        gameTextLayout.preferredHeight = 30;
-
-        GameObject gameBackBtnObj = CreateButton(gameScreen.transform, "로비로 돌아가기");
-        Button gameBackBtn = gameBackBtnObj.GetComponent<Button>();
-        LayoutElement gameBackLayout = gameBackBtnObj.AddComponent<LayoutElement>();
-        gameBackLayout.preferredHeight = 40;
-        gameScreen.SetActive(false);
-
-        // ----- Design Screen -----
-        GameObject designScreen = new GameObject("DesignScreen");
-        RectTransform designRect = designScreen.AddComponent<RectTransform>();
-        designRect.SetParent(root.transform, false);
-        designRect.anchorMin = Vector2.zero;
-        designRect.anchorMax = Vector2.one;
-        designRect.offsetMin = Vector2.zero;
-        designRect.offsetMax = Vector2.zero;
-        Image designBg = designScreen.AddComponent<Image>();
-        designBg.color = new Color(0f, 0f, 0f, 0.35f);
-
-        GameObject designBackBtnObj = CreateButton(designScreen.transform, "로비로 돌아가기");
-        RectTransform designBackRect = designBackBtnObj.GetComponent<RectTransform>();
-        designBackRect.anchorMin = new Vector2(1, 1);
-        designBackRect.anchorMax = new Vector2(1, 1);
-        designBackRect.pivot = new Vector2(1, 1);
-        designBackRect.anchoredPosition = new Vector2(-20, -20);
-        designBackRect.sizeDelta = new Vector2(200, 40);
-        Button designBackBtn = designBackBtnObj.GetComponent<Button>();
-
-        GameObject panel = new GameObject("UniformGeneratorPanel");
-        RectTransform panelRect = panel.AddComponent<RectTransform>();
-        panel.transform.SetParent(designScreen.transform, false);
-        panelRect.anchorMin = new Vector2(0, 1);
-        panelRect.anchorMax = new Vector2(0, 1);
-        panelRect.pivot = new Vector2(0, 1);
-        panelRect.anchoredPosition = new Vector2(20, -80);
-        panelRect.sizeDelta = new Vector2(400, 350);
-
-        Image panelBg = panel.AddComponent<Image>();
-        panelBg.color = new Color(0.1f, 0.1f, 0.1f, 0.85f);
-
-        VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(15, 15, 15, 15);
-        layout.spacing = 10;
-        layout.childControlHeight = false;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = false;
-        layout.childForceExpandWidth = true;
-
-        GameObject titleObj = CreateText(panel.transform, "Uniform Generator", 20, TextAnchor.MiddleCenter);
-        LayoutElement titleLayout = titleObj.AddComponent<LayoutElement>();
-        titleLayout.preferredHeight = 30;
-
-        GameObject inputObj = CreateInputField(panel.transform, "Enter prompt...");
-        InputField inputPrompt = inputObj.GetComponent<InputField>();
-        LayoutElement inputLayout = inputObj.AddComponent<LayoutElement>();
-        inputLayout.preferredHeight = 35;
-
-        GameObject dropdownObj = CreateDropdown(panel.transform, new string[] { "Blue Team", "Purple Team" });
-        Dropdown teamDropdown = dropdownObj.GetComponent<Dropdown>();
-        LayoutElement dropdownLayout = dropdownObj.AddComponent<LayoutElement>();
-        dropdownLayout.preferredHeight = 35;
-
-        GameObject tilingObj = CreateSlider(panel.transform, "Tiling", 0.5f, 12f, 4f);
-        Slider tilingSlider = tilingObj.GetComponentInChildren<Slider>();
-        LayoutElement tilingLayout = tilingObj.AddComponent<LayoutElement>();
-        tilingLayout.preferredHeight = 40;
-
-        GameObject strengthObj = CreateSlider(panel.transform, "Strength", 0f, 1f, 1f);
-        Slider strengthSlider = strengthObj.GetComponentInChildren<Slider>();
-        LayoutElement strengthLayout = strengthObj.AddComponent<LayoutElement>();
-        strengthLayout.preferredHeight = 40;
-
-        GameObject btnObj = CreateButton(panel.transform, "Generate Uniform");
-        Button generateBtn = btnObj.GetComponent<Button>();
-        LayoutElement btnLayout = btnObj.AddComponent<LayoutElement>();
-        btnLayout.preferredHeight = 40;
-
-        GameObject spinner = CreateText(panel.transform, "Loading...", 16, TextAnchor.MiddleCenter);
-        spinner.SetActive(false);
-
-        GameObject toast = CreateText(panel.transform, "", 14, TextAnchor.MiddleCenter);
-        toast.SetActive(false);
-        Text toastText = toast.GetComponent<Text>();
-        designScreen.SetActive(false);
+        GameObject promptHost = new GameObject("UniformPromptController");
+        promptHost.transform.SetParent(designScreen.transform, false);
 
         if (Application.isPlaying && bridge != null)
         {
-            promptUI = panel.AddComponent<UniformPromptUI>();
+            promptUI = promptHost.AddComponent<UniformPromptUI>();
 
             SetUIField("inputPrompt", inputPrompt);
             SetUIField("teamDropdown", teamDropdown);
             SetUIField("tilingSlider", tilingSlider);
             SetUIField("strengthSlider", strengthSlider);
-            SetUIField("generateBtn", generateBtn);
+            SetUIField("generateBtn", null);
             SetUIField("loadingSpinner", spinner);
             SetUIField("toastText", toastText);
             SetUIField("bridge", bridge);
@@ -363,8 +730,8 @@ public class UniformSystemBootstrap : MonoBehaviour
         screenManager.lobbyScreen = lobbyScreen;
         screenManager.gameScreen = gameScreen;
         screenManager.designScreen = designScreen;
-        screenManager.playButton = playBtn;
-        screenManager.designButton = designBtn;
+        screenManager.playButton = lobbyStartBtn;
+        screenManager.designButton = lobbyDesignBtn;
         screenManager.backFromGameButton = gameBackBtn;
         screenManager.backFromDesignButton = designBackBtn;
         screenManager.promptUI = promptUI;
@@ -385,7 +752,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         }
     }
 
-    GameObject CreateText(Transform parent, string text, int fontSize, TextAnchor alignment)
+    GameObject CreateText(Transform parent, string text, int fontSize, TextAnchor alignment, Color? overrideColor = null)
     {
         GameObject obj = new GameObject("Text_" + text.Replace(" ", ""));
         obj.transform.SetParent(parent, false);
@@ -398,9 +765,31 @@ public class UniformSystemBootstrap : MonoBehaviour
         txt.text = text;
         txt.fontSize = fontSize;
         txt.alignment = alignment;
-        txt.color = Color.white;
+        txt.color = overrideColor ?? Color.white;
 
         return obj;
+    }
+
+    void OnLobbySplashClicked()
+    {
+        if (lobbyButtonsShown)
+            return;
+        lobbyButtonsShown = true;
+
+        if (lobbySplashOverlay != null)
+        {
+            lobbySplashOverlay.SetActive(false);
+        }
+
+        if (lobbyDimOverlay != null)
+        {
+            lobbyDimOverlay.gameObject.SetActive(true);
+        }
+
+        if (lobbyContentRoot != null)
+        {
+            lobbyContentRoot.SetActive(true);
+        }
     }
 
     GameObject CreateInputField(Transform parent, string placeholder)
@@ -412,7 +801,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         rect.sizeDelta = new Vector2(0, 35);
 
         Image img = obj.AddComponent<Image>();
-        img.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        img.color = new Color(0.35f, 0.53f, 0.92f, 0.95f);
 
         InputField input = obj.AddComponent<InputField>();
 
@@ -422,7 +811,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         Text txt = textObj.AddComponent<Text>();
         txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         txt.color = Color.white;
-        txt.fontSize = 14;
+        txt.fontSize = 20;
         txt.supportRichText = false;
 
         RectTransform textRect = textObj.GetComponent<RectTransform>();
@@ -437,8 +826,8 @@ public class UniformSystemBootstrap : MonoBehaviour
         Text placeholderTxt = placeholderObj.AddComponent<Text>();
         placeholderTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         placeholderTxt.text = placeholder;
-        placeholderTxt.color = new Color(0.5f, 0.5f, 0.5f, 1f);
-        placeholderTxt.fontSize = 14;
+        placeholderTxt.color = new Color(0.8f, 0.85f, 1f, 0.95f);
+        placeholderTxt.fontSize = 20;
         placeholderTxt.fontStyle = FontStyle.Italic;
 
         RectTransform placeholderRect = placeholderObj.GetComponent<RectTransform>();
@@ -616,91 +1005,62 @@ public class UniformSystemBootstrap : MonoBehaviour
         GameObject container = new GameObject("Slider_" + label);
         container.transform.SetParent(parent, false);
 
-        RectTransform containerRect = container.AddComponent<RectTransform>();
-        containerRect.sizeDelta = new Vector2(0, 40);
+        VerticalLayoutGroup layout = container.AddComponent<VerticalLayoutGroup>();
+        layout.spacing = 6;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
 
-        HorizontalLayoutGroup hlg = container.AddComponent<HorizontalLayoutGroup>();
-        hlg.childControlWidth = true;
-        hlg.childControlHeight = true;
-        hlg.childForceExpandWidth = true;
-        hlg.childForceExpandHeight = true;
-        hlg.spacing = 10;
-
-        // Label
         GameObject labelObj = new GameObject("Label");
         labelObj.transform.SetParent(container.transform, false);
         Text labelTxt = labelObj.AddComponent<Text>();
         labelTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        labelTxt.text = label + ":";
-        labelTxt.color = Color.white;
-        labelTxt.fontSize = 14;
+        labelTxt.text = label;
+        labelTxt.color = Color.black;
+        labelTxt.fontSize = 20;
         labelTxt.alignment = TextAnchor.MiddleLeft;
 
-        LayoutElement labelLayout = labelObj.AddComponent<LayoutElement>();
-        labelLayout.minWidth = 80;
-        labelLayout.flexibleWidth = 0;
-
-        // Slider
         GameObject sliderObj = new GameObject("Slider");
         sliderObj.transform.SetParent(container.transform, false);
-
         RectTransform sliderRect = sliderObj.AddComponent<RectTransform>();
-        sliderRect.sizeDelta = new Vector2(0, 20);
+        sliderRect.sizeDelta = new Vector2(0, 30);
 
         Slider slider = sliderObj.AddComponent<Slider>();
         slider.minValue = min;
         slider.maxValue = max;
         slider.value = defaultValue;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.transition = Selectable.Transition.None;
 
-        // Background
         GameObject bgObj = new GameObject("Background");
         bgObj.transform.SetParent(sliderObj.transform, false);
-
         RectTransform bgRect = bgObj.AddComponent<RectTransform>();
-        bgRect.anchorMin = new Vector2(0, 0.25f);
-        bgRect.anchorMax = new Vector2(1, 0.75f);
+        bgRect.anchorMin = new Vector2(0, 0.45f);
+        bgRect.anchorMax = new Vector2(1, 0.55f);
         bgRect.offsetMin = Vector2.zero;
         bgRect.offsetMax = Vector2.zero;
 
         Image bgImg = bgObj.AddComponent<Image>();
-        bgImg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        bgImg.color = new Color(0.92f, 0.93f, 0.96f, 1f);
 
-        // Fill Area
-        GameObject fillAreaObj = new GameObject("Fill Area");
-        fillAreaObj.transform.SetParent(sliderObj.transform, false);
-
-        RectTransform fillAreaRect = fillAreaObj.AddComponent<RectTransform>();
-        fillAreaRect.anchorMin = new Vector2(0, 0.25f);
-        fillAreaRect.anchorMax = new Vector2(1, 0.75f);
-        fillAreaRect.offsetMin = new Vector2(5, 0);
-        fillAreaRect.offsetMax = new Vector2(-5, 0);
-
-        // Fill
         GameObject fillObj = new GameObject("Fill");
-        fillObj.transform.SetParent(fillAreaObj.transform, false);
-
+        fillObj.transform.SetParent(bgObj.transform, false);
         RectTransform fillRect = fillObj.AddComponent<RectTransform>();
-        fillRect.sizeDelta = new Vector2(10, 0);
+        fillRect.anchorMin = new Vector2(0, 0);
+        fillRect.anchorMax = new Vector2(1, 1);
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
 
         Image fillImg = fillObj.AddComponent<Image>();
-        fillImg.color = new Color(0.3f, 0.6f, 0.9f, 1f);
+        fillImg.color = new Color(0.35f, 0.52f, 0.92f, 1f);
 
-        // Handle Slide Area
-        GameObject handleAreaObj = new GameObject("Handle Slide Area");
-        handleAreaObj.transform.SetParent(sliderObj.transform, false);
-
-        RectTransform handleAreaRect = handleAreaObj.AddComponent<RectTransform>();
-        handleAreaRect.anchorMin = Vector2.zero;
-        handleAreaRect.anchorMax = Vector2.one;
-        handleAreaRect.offsetMin = new Vector2(10, 0);
-        handleAreaRect.offsetMax = new Vector2(-10, 0);
-
-        // Handle
         GameObject handleObj = new GameObject("Handle");
-        handleObj.transform.SetParent(handleAreaObj.transform, false);
-
+        handleObj.transform.SetParent(sliderObj.transform, false);
         RectTransform handleRect = handleObj.AddComponent<RectTransform>();
-        handleRect.sizeDelta = new Vector2(20, 0);
+        handleRect.sizeDelta = new Vector2(26, 45);
+        handleRect.anchorMin = new Vector2(0, 0.5f);
+        handleRect.anchorMax = new Vector2(0, 0.5f);
+        handleRect.anchoredPosition = Vector2.zero;
 
         Image handleImg = handleObj.AddComponent<Image>();
         handleImg.color = Color.white;
@@ -721,7 +1081,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         rect.sizeDelta = new Vector2(0, 40);
 
         Image img = obj.AddComponent<Image>();
-        img.color = new Color(0.2f, 0.5f, 0.8f, 1f);
+        img.color = new Color(0.98f, 0.98f, 1f, 0.95f);
 
         Button btn = obj.AddComponent<Button>();
         btn.targetGraphic = img;
@@ -740,11 +1100,48 @@ public class UniformSystemBootstrap : MonoBehaviour
         txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         txt.text = text;
         txt.color = Color.white;
-        txt.fontSize = 16;
+        txt.fontSize = 26;
         txt.alignment = TextAnchor.MiddleCenter;
         txt.fontStyle = FontStyle.Bold;
 
         return obj;
+    }
+
+    GameObject CreateLobbyOption(Transform parent, string title, string desc, string buttonLabel, out Button button)
+    {
+        GameObject option = new GameObject("LobbyOption_" + buttonLabel);
+        option.transform.SetParent(parent, false);
+
+        Image cardBg = option.AddComponent<Image>();
+        cardBg.color = new Color(0.05f, 0.07f, 0.18f, 0.75f);
+        ApplyOutline(cardBg, 1.3f);
+        ApplyShadow(cardBg, new Vector2(2.5f, -2.5f), 0.25f);
+
+        VerticalLayoutGroup layout = option.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(20, 20, 20, 20);
+        layout.spacing = 10;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+
+        GameObject header = CreateText(option.transform, title, 28, TextAnchor.MiddleCenter, Color.white);
+        Text headerTxt = header.GetComponent<Text>();
+        headerTxt.fontStyle = FontStyle.Bold;
+        ApplyOutline(headerTxt, 0.5f);
+
+        GameObject descObj = CreateText(option.transform, desc, 16, TextAnchor.MiddleCenter, new Color(0.9f, 0.93f, 1f, 0.95f));
+        LayoutElement descLayout = descObj.AddComponent<LayoutElement>();
+        descLayout.preferredHeight = 40;
+        ApplyOutline(descObj.GetComponent<Text>(), 0.5f);
+
+        GameObject btnObj = CreateButton(option.transform, buttonLabel);
+        SetupSketchButton(btnObj);
+        LayoutElement btnLayout = btnObj.AddComponent<LayoutElement>();
+        btnLayout.preferredHeight = 60;
+        btnLayout.preferredWidth = 240;
+
+        button = btnObj.GetComponent<Button>();
+        return option;
     }
 
     Transform[] AutoFindTeamRoots(string teamName)

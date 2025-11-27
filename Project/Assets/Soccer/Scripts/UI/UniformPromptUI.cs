@@ -27,6 +27,18 @@ public class UniformPromptUI : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        if (!Application.isPlaying) return;
+        if (inputPrompt != null && inputPrompt.isFocused)
+        {
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                OnClickGenerate();
+            }
+        }
+    }
+
     public void Initialize()
     {
         if (_initialized) return;
@@ -35,6 +47,10 @@ public class UniformPromptUI : MonoBehaviour
         if (generateBtn != null)
         {
             generateBtn.onClick.AddListener(OnClickGenerate);
+        }
+        if (inputPrompt != null)
+        {
+            inputPrompt.lineType = InputField.LineType.SingleLine;
         }
 
         if (loadingSpinner) loadingSpinner.SetActive(false);
