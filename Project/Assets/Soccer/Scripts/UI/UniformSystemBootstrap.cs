@@ -34,6 +34,15 @@ public class UniformSystemBootstrap : MonoBehaviour
     private Image lobbyDimOverlay;
     private bool lobbyButtonsShown;
 
+    // Preview stage for the design screen
+    private GameObject previewStage;
+    private Camera previewCamera;
+    private Light previewLight;
+    private RenderTexture previewTexture;
+    private GameObject previewCharacter;
+    private int previewLayer = -1;
+    private readonly Vector3 previewStageOrigin = new Vector3(4200f, 120f, 4200f);
+
     private bool initialized = false;
 
     void OnEnable()
@@ -43,6 +52,21 @@ public class UniformSystemBootstrap : MonoBehaviour
             Debug.Log("[UniformBootstrap] Starting initialization...");
             InitializeUniformSystem();
             initialized = true;
+        }
+        else if (initialized && screenManager != null)
+        {
+            UniformUIScreenManager.OnScreenStateChanged -= HandleScreenStateChanged;
+            UniformUIScreenManager.OnScreenStateChanged += HandleScreenStateChanged;
+            HandleScreenStateChanged(screenManager.CurrentState);
+        }
+    }
+
+    void OnDisable()
+    {
+        UniformUIScreenManager.OnScreenStateChanged -= HandleScreenStateChanged;
+        if (!Application.isPlaying)
+        {
+            TeardownPreviewStage();
         }
     }
 
@@ -184,8 +208,11 @@ public class UniformSystemBootstrap : MonoBehaviour
     }
 
     GameObject BuildDesignScreen(Transform parent, out InputField inputPrompt, out Slider tilingSlider,
-        out Slider strengthSlider, out GameObject spinner, out Text toastText, out Button backBtn, out Dropdown teamDropdown)
+        out Slider strengthSlider, out GameObject spinner, out Text toastText, out Button backBtn,
+        out Dropdown teamDropdown, out Button generateBtn)
     {
+        EnsurePreviewStage();
+
         GameObject designScreen = new GameObject("DesignScreen");
         RectTransform rect = designScreen.AddComponent<RectTransform>();
         rect.SetParent(parent, false);
@@ -195,168 +222,189 @@ public class UniformSystemBootstrap : MonoBehaviour
         rect.offsetMax = Vector2.zero;
 
         Image bg = designScreen.AddComponent<Image>();
-        bg.color = new Color(0.97f, 0.98f, 1f, 0.96f);
-        ApplyOutline(bg, 2f);
+        bg.color = new Color(0.04f, 0.06f, 0.14f, 0.96f);
 
-        GameObject designAccent = new GameObject("DesignAccent");
-        RectTransform designAccentRect = designAccent.AddComponent<RectTransform>();
-        designAccentRect.SetParent(designScreen.transform, false);
-        designAccentRect.anchorMin = new Vector2(0, 0.9f);
-        designAccentRect.anchorMax = new Vector2(1, 1);
-        designAccentRect.offsetMin = Vector2.zero;
-        designAccentRect.offsetMax = Vector2.zero;
-        Image designAccentImg = designAccent.AddComponent<Image>();
-        designAccentImg.color = new Color(0.39f, 0.56f, 0.96f, 0.12f);
+        GameObject accent = new GameObject("DesignAccent");
+        RectTransform accentRect = accent.AddComponent<RectTransform>();
+        accentRect.SetParent(designScreen.transform, false);
+        accentRect.anchorMin = new Vector2(0, 0);
+        accentRect.anchorMax = new Vector2(0.55f, 0.5f);
+        accentRect.offsetMin = Vector2.zero;
+        accentRect.offsetMax = Vector2.zero;
+        Image accentImg = accent.AddComponent<Image>();
+        accentImg.color = new Color(0.1f, 0.16f, 0.3f, 0.4f);
+        accentImg.raycastTarget = false;
 
-        GameObject cornerAccent = new GameObject("CornerAccent");
-        RectTransform cornerRect = cornerAccent.AddComponent<RectTransform>();
-        cornerRect.SetParent(designScreen.transform, false);
-        cornerRect.anchorMin = new Vector2(0, 0);
-        cornerRect.anchorMax = new Vector2(0.3f, 0.18f);
-        cornerRect.offsetMin = Vector2.zero;
-        cornerRect.offsetMax = Vector2.zero;
-        Image cornerImg = cornerAccent.AddComponent<Image>();
-        cornerImg.color = new Color(0.83f, 0.9f, 1f, 0.35f);
+        GameObject content = new GameObject("DesignContent");
+        RectTransform contentRect = content.AddComponent<RectTransform>();
+        contentRect.SetParent(designScreen.transform, false);
+        contentRect.anchorMin = new Vector2(0.03f, 0.05f);
+        contentRect.anchorMax = new Vector2(0.97f, 0.9f);
+        contentRect.offsetMin = Vector2.zero;
+        contentRect.offsetMax = Vector2.zero;
 
-        GameObject designHeading = CreateText(designScreen.transform, "Design Studio", 34, TextAnchor.UpperLeft, new Color(0.12f, 0.18f, 0.35f, 1f));
-        RectTransform headingRect = designHeading.GetComponent<RectTransform>();
-        headingRect.anchorMin = new Vector2(0.06f, 0.9f);
-        headingRect.anchorMax = new Vector2(0.6f, 0.97f);
-        headingRect.offsetMin = Vector2.zero;
-        headingRect.offsetMax = Vector2.zero;
-
-        GameObject boardLabel = CreateText(designScreen.transform, "유니폼 스케치", 20, TextAnchor.LowerLeft, new Color(0.25f, 0.3f, 0.45f, 1f));
-        RectTransform boardLabelRect = boardLabel.GetComponent<RectTransform>();
-        boardLabelRect.anchorMin = new Vector2(0.08f, 0.86f);
-        boardLabelRect.anchorMax = new Vector2(0.4f, 0.9f);
-        boardLabelRect.offsetMin = Vector2.zero;
-        boardLabelRect.offsetMax = Vector2.zero;
-
-        GameObject board = new GameObject("SketchBoard");
-        RectTransform boardRect = board.AddComponent<RectTransform>();
-        boardRect.SetParent(designScreen.transform, false);
-        boardRect.anchorMin = new Vector2(0.07f, 0.28f);
-        boardRect.anchorMax = new Vector2(0.78f, 0.82f);
-        boardRect.offsetMin = Vector2.zero;
-        boardRect.offsetMax = Vector2.zero;
-
-        Image boardImg = board.AddComponent<Image>();
-        boardImg.color = new Color(1f, 1f, 1f, 0.95f);
-        ApplyOutline(boardImg, 1.5f);
-        ApplyShadow(boardImg, new Vector2(3, -3), 0.25f);
-
-        GameObject row = new GameObject("SketchRow");
-        RectTransform rowRect = row.AddComponent<RectTransform>();
-        rowRect.SetParent(board.transform, false);
-        rowRect.anchorMin = new Vector2(0.05f, 0.1f);
-        rowRect.anchorMax = new Vector2(0.95f, 0.9f);
-        rowRect.offsetMin = Vector2.zero;
-        rowRect.offsetMax = Vector2.zero;
-
-        HorizontalLayoutGroup rowLayout = row.AddComponent<HorizontalLayoutGroup>();
-        rowLayout.spacing = 40;
-        rowLayout.childAlignment = TextAnchor.LowerCenter;
+        HorizontalLayoutGroup rowLayout = content.AddComponent<HorizontalLayoutGroup>();
+        rowLayout.spacing = 18f;
+        rowLayout.padding = new RectOffset(18, 18, 18, 18);
+        rowLayout.childAlignment = TextAnchor.UpperCenter;
         rowLayout.childControlWidth = true;
-        rowLayout.childControlHeight = false;
-        rowLayout.childForceExpandHeight = false;
+        rowLayout.childControlHeight = true;
+        rowLayout.childForceExpandWidth = true;
+        rowLayout.childForceExpandHeight = true;
 
-        CreateSketchColumn(row.transform, "캐릭터", UISketchFactory.CreateCharacterSketch());
-        CreateSketchColumn(row.transform, "상의", UISketchFactory.CreateShirtSketch());
-        CreateSketchColumn(row.transform, "하의", UISketchFactory.CreatePantsSketch());
+        GameObject previewPanel = new GameObject("PreviewPanel");
+        previewPanel.transform.SetParent(content.transform, false);
+        LayoutElement previewLayout = previewPanel.AddComponent<LayoutElement>();
+        previewLayout.flexibleWidth = 1.6f;
+        previewLayout.preferredHeight = 560f;
+        Image previewBg = previewPanel.AddComponent<Image>();
+        previewBg.color = new Color(0.08f, 0.12f, 0.26f, 0.9f);
+        ApplyOutline(previewBg, 1.8f);
+        ApplyShadow(previewBg, new Vector2(3.5f, -3.5f), 0.35f);
 
-        GameObject boardHint = CreateText(board.transform, "왼쪽부터 캐릭터, 상의, 하의 재질을 미리 살펴볼 수 있어요.", 16, TextAnchor.MiddleCenter, new Color(0.32f, 0.36f, 0.48f, 1f));
-        RectTransform boardHintRect = boardHint.GetComponent<RectTransform>();
-        boardHintRect.anchorMin = new Vector2(0.05f, 0);
-        boardHintRect.anchorMax = new Vector2(0.95f, 0.15f);
-        boardHintRect.offsetMin = Vector2.zero;
-        boardHintRect.offsetMax = Vector2.zero;
+        VerticalLayoutGroup previewGroup = previewPanel.AddComponent<VerticalLayoutGroup>();
+        previewGroup.padding = new RectOffset(18, 18, 18, 18);
+        previewGroup.spacing = 10f;
+        previewGroup.childAlignment = TextAnchor.UpperCenter;
+        previewGroup.childControlWidth = true;
+        previewGroup.childForceExpandHeight = true;
 
-        GameObject promptStrip = new GameObject("PromptStrip");
-        RectTransform promptStripRect = promptStrip.AddComponent<RectTransform>();
-        promptStripRect.SetParent(designScreen.transform, false);
-        promptStripRect.anchorMin = new Vector2(0.06f, 0.14f);
-        promptStripRect.anchorMax = new Vector2(0.8f, 0.22f);
-        promptStripRect.offsetMin = Vector2.zero;
-        promptStripRect.offsetMax = Vector2.zero;
-        Image promptStripImg = promptStrip.AddComponent<Image>();
-        promptStripImg.color = new Color(0.78f, 0.86f, 1f, 0.6f);
+        GameObject previewTitle = CreateText(previewPanel.transform, "유니폼 미리보기", 22, TextAnchor.MiddleLeft, new Color(0.82f, 0.89f, 1f, 1f));
+        LayoutElement previewTitleLayout = previewTitle.AddComponent<LayoutElement>();
+        previewTitleLayout.preferredHeight = 34;
 
-        GameObject inputObj = CreateInputField(designScreen.transform, "프롬프트 입력");
+        GameObject previewImageObj = new GameObject("PreviewRender");
+        previewImageObj.transform.SetParent(previewPanel.transform, false);
+        RawImage previewImage = previewImageObj.AddComponent<RawImage>();
+        previewImage.texture = previewTexture;
+        previewImage.color = Color.white;
+        RectTransform previewImageRect = previewImageObj.GetComponent<RectTransform>();
+        previewImageRect.anchorMin = Vector2.zero;
+        previewImageRect.anchorMax = Vector2.one;
+        previewImageRect.offsetMin = Vector2.zero;
+        previewImageRect.offsetMax = Vector2.zero;
+        LayoutElement previewImageLayout = previewImageObj.AddComponent<LayoutElement>();
+        previewImageLayout.flexibleWidth = 1f;
+        previewImageLayout.flexibleHeight = 1f;
+        previewImageLayout.preferredHeight = 500f;
+
+        GameObject controlPanel = new GameObject("DesignControls");
+        controlPanel.transform.SetParent(content.transform, false);
+        LayoutElement controlLayout = controlPanel.AddComponent<LayoutElement>();
+        controlLayout.flexibleWidth = 1f;
+        Image controlBg = controlPanel.AddComponent<Image>();
+        controlBg.color = new Color(0.06f, 0.09f, 0.2f, 0.85f);
+        ApplyOutline(controlBg, 1.4f);
+        ApplyShadow(controlBg, new Vector2(2.5f, -2.5f), 0.3f);
+
+        VerticalLayoutGroup controlGroup = controlPanel.AddComponent<VerticalLayoutGroup>();
+        controlGroup.padding = new RectOffset(20, 20, 22, 20);
+        controlGroup.spacing = 10f;
+        controlGroup.childAlignment = TextAnchor.UpperLeft;
+        controlGroup.childControlWidth = true;
+        controlGroup.childForceExpandHeight = false;
+
+        GameObject heading = CreateText(controlPanel.transform, "디자인 실험실", 30, TextAnchor.UpperLeft, Color.white);
+        LayoutElement headingLayout = heading.AddComponent<LayoutElement>();
+        headingLayout.preferredHeight = 40;
+        ApplyShadow(heading.GetComponent<Text>(), new Vector2(1.2f, -1.2f), 0.35f);
+
+        GameObject subHeading = CreateText(controlPanel.transform, "로비와 같은 분위기로 캐릭터를 크게 확인해요.", 16, TextAnchor.UpperLeft, new Color(0.78f, 0.86f, 1f, 0.9f));
+        LayoutElement subHeadingLayout = subHeading.AddComponent<LayoutElement>();
+        subHeadingLayout.preferredHeight = 28;
+
+        GameObject promptLabel = CreateText(controlPanel.transform, "프롬프트", 18, TextAnchor.UpperLeft, new Color(0.78f, 0.86f, 1f, 0.95f));
+        LayoutElement promptLabelLayout = promptLabel.AddComponent<LayoutElement>();
+        promptLabelLayout.preferredHeight = 24;
+
+        GameObject promptRow = new GameObject("PromptRow");
+        promptRow.transform.SetParent(controlPanel.transform, false);
+        HorizontalLayoutGroup promptRowLayout = promptRow.AddComponent<HorizontalLayoutGroup>();
+        promptRowLayout.spacing = 10f;
+        promptRowLayout.childAlignment = TextAnchor.MiddleCenter;
+        promptRowLayout.childControlWidth = true;
+        promptRowLayout.childControlHeight = true;
+        promptRowLayout.childForceExpandWidth = true;
+        promptRowLayout.childForceExpandHeight = false;
+
+        GameObject inputObj = CreateInputField(promptRow.transform, "팀 유니폼에 어울리는 키워드를 적어주세요");
         inputPrompt = inputObj.GetComponent<InputField>();
         RectTransform inputRect = inputObj.GetComponent<RectTransform>();
-        inputRect.anchorMin = new Vector2(0.08f, 0.15f);
-        inputRect.anchorMax = new Vector2(0.78f, 0.21f);
-        inputRect.offsetMin = Vector2.zero;
-        inputRect.offsetMax = Vector2.zero;
-        ApplyOutline(inputObj.GetComponent<Image>(), 1.5f);
+        inputRect.sizeDelta = new Vector2(0, 52);
+        LayoutElement inputLayout = inputObj.AddComponent<LayoutElement>();
+        inputLayout.flexibleWidth = 1f;
+        ApplyOutline(inputObj.GetComponent<Image>(), 1.2f);
+        ApplyShadow(inputObj.GetComponent<Image>(), new Vector2(1.5f, -1.5f), 0.2f);
 
-        GameObject sliderPanel = new GameObject("ControlPanel");
-        RectTransform sliderRect = sliderPanel.AddComponent<RectTransform>();
-        sliderRect.SetParent(designScreen.transform, false);
-        sliderRect.anchorMin = new Vector2(0.8f, 0.15f);
-        sliderRect.anchorMax = new Vector2(0.95f, 0.38f);
-        sliderRect.offsetMin = Vector2.zero;
-        sliderRect.offsetMax = Vector2.zero;
+        GameObject generateObj = CreateButton(promptRow.transform, "디자인 생성");
+        generateBtn = generateObj.GetComponent<Button>();
+        RectTransform generateRect = generateObj.GetComponent<RectTransform>();
+        generateRect.sizeDelta = new Vector2(200, 52);
+        LayoutElement generateLayout = generateObj.AddComponent<LayoutElement>();
+        generateLayout.preferredWidth = 200;
+        generateLayout.preferredHeight = 52;
+        Image generateImg = generateObj.GetComponent<Image>();
+        if (generateImg != null)
+        {
+            generateImg.color = new Color(0.2f, 0.52f, 0.96f, 1f);
+            ApplyShadow(generateImg, new Vector2(2f, -2f), 0.35f);
+        }
+        Text generateTxt = generateObj.GetComponentInChildren<Text>();
+        if (generateTxt != null)
+        {
+            generateTxt.text = "디자인 생성";
+            generateTxt.fontSize = 22;
+            generateTxt.color = Color.white;
+        }
 
-        Image sliderBg = sliderPanel.AddComponent<Image>();
-        sliderBg.color = new Color(0.98f, 0.98f, 1f, 0.95f);
-        ApplyOutline(sliderBg, 1.5f);
+        GameObject slidersContainer = new GameObject("PatternControls");
+        slidersContainer.transform.SetParent(controlPanel.transform, false);
+        VerticalLayoutGroup slidersLayout = slidersContainer.AddComponent<VerticalLayoutGroup>();
+        slidersLayout.spacing = 10f;
+        slidersLayout.childAlignment = TextAnchor.UpperLeft;
+        slidersLayout.childControlWidth = true;
+        slidersLayout.childForceExpandHeight = false;
+        LayoutElement sliderContainerLayout = slidersContainer.AddComponent<LayoutElement>();
+        sliderContainerLayout.preferredHeight = 180f;
 
-        VerticalLayoutGroup sliderLayout = sliderPanel.AddComponent<VerticalLayoutGroup>();
-        sliderLayout.padding = new RectOffset(15, 15, 15, 15);
-        sliderLayout.spacing = 15;
-        sliderLayout.childAlignment = TextAnchor.UpperLeft;
-        sliderLayout.childControlWidth = true;
-        sliderLayout.childForceExpandHeight = false;
-
-        GameObject sliderTitle = CreateText(sliderPanel.transform, "세부 옵션", 20, TextAnchor.UpperLeft, new Color(0.2f, 0.26f, 0.45f, 1f));
-        LayoutElement sliderTitleLayout = sliderTitle.AddComponent<LayoutElement>();
-        sliderTitleLayout.preferredHeight = 28;
-
-        GameObject tilingObj = CreateSlider(sliderPanel.transform, "Tiling", 0.5f, 12f, 4f);
-        LayoutElement tilingLayout = tilingObj.AddComponent<LayoutElement>();
-        tilingLayout.preferredHeight = 60;
+        GameObject tilingObj = CreateSlider(slidersContainer.transform, "Tiling (패턴 크기)", 0.5f, 12f, 4f);
         tilingSlider = tilingObj.GetComponentInChildren<Slider>();
-
-        GameObject strengthObj = CreateSlider(sliderPanel.transform, "Strength", 0f, 1f, 1f);
-        LayoutElement strengthLayout = strengthObj.AddComponent<LayoutElement>();
-        strengthLayout.preferredHeight = 60;
+        GameObject strengthObj = CreateSlider(slidersContainer.transform, "Strength (강도)", 0f, 1f, 1f);
         strengthSlider = strengthObj.GetComponentInChildren<Slider>();
 
-        GameObject sliderHint = CreateText(sliderPanel.transform, "옵션을 조절한 뒤 프롬프트를 입력하면 새로운 패턴을 적용합니다.", 14, TextAnchor.UpperLeft, new Color(0.32f, 0.36f, 0.48f, 1f));
-        LayoutElement sliderHintLayout = sliderHint.AddComponent<LayoutElement>();
-        sliderHintLayout.preferredHeight = 34;
+        GameObject hint = CreateText(controlPanel.transform, "프롬프트와 옵션을 정한 뒤 디자인 생성 버튼을 누르면 바로 적용돼요.", 14, TextAnchor.UpperLeft, new Color(0.82f, 0.88f, 1f, 0.85f));
+        LayoutElement hintLayout = hint.AddComponent<LayoutElement>();
+        hintLayout.preferredHeight = 34;
 
-        GameObject spinnerObj = CreateText(designScreen.transform, "로딩 중...", 18, TextAnchor.MiddleCenter, Color.black);
-        RectTransform spinnerRect = spinnerObj.GetComponent<RectTransform>();
-        spinnerRect.anchorMin = spinnerRect.anchorMax = new Vector2(0.5f, 0.5f);
-        spinnerRect.sizeDelta = new Vector2(200, 40);
+        GameObject spinnerObj = CreateText(controlPanel.transform, "생성 중...", 16, TextAnchor.UpperLeft, new Color(0.76f, 0.86f, 1f, 1f));
+        LayoutElement spinnerLayout = spinnerObj.AddComponent<LayoutElement>();
+        spinnerLayout.preferredHeight = 24;
         spinnerObj.SetActive(false);
         spinner = spinnerObj;
 
-        GameObject toastObj = CreateText(designScreen.transform, "", 16, TextAnchor.MiddleCenter, Color.black);
-        RectTransform toastRect = toastObj.GetComponent<RectTransform>();
-        toastRect.anchorMin = new Vector2(0.3f, 0.03f);
-        toastRect.anchorMax = new Vector2(0.7f, 0.08f);
-        toastRect.offsetMin = Vector2.zero;
-        toastRect.offsetMax = Vector2.zero;
-        toastObj.SetActive(false);
-        toastText = toastObj.GetComponent<Text>();
-
-        GameObject backBtnObj = CreateButton(designScreen.transform, "로비");
+        GameObject backBtnObj = CreateButton(designScreen.transform, "로비로");
         RectTransform backRect = backBtnObj.GetComponent<RectTransform>();
-        backRect.anchorMin = new Vector2(0.92f, 0.9f);
-        backRect.anchorMax = new Vector2(0.98f, 0.97f);
+        backRect.anchorMin = new Vector2(0.04f, 0.92f);
+        backRect.anchorMax = new Vector2(0.18f, 0.98f);
         backRect.offsetMin = Vector2.zero;
         backRect.offsetMax = Vector2.zero;
         SetupSketchButton(backBtnObj);
         backBtn = backBtnObj.GetComponent<Button>();
 
+        GameObject toastObj = CreateText(designScreen.transform, "", 16, TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.45f, 1f));
+        RectTransform toastRect = toastObj.GetComponent<RectTransform>();
+        toastRect.anchorMin = new Vector2(0.3f, 0.02f);
+        toastRect.anchorMax = new Vector2(0.7f, 0.07f);
+        toastRect.offsetMin = Vector2.zero;
+        toastRect.offsetMax = Vector2.zero;
+        toastObj.SetActive(false);
+        toastText = toastObj.GetComponent<Text>();
+
         GameObject dropdownObj = CreateDropdown(designScreen.transform, new string[] { "Blue Team", "Purple Team" });
         teamDropdown = dropdownObj.GetComponent<Dropdown>();
         teamDropdown.value = 0;
         RectTransform dropdownRect = dropdownObj.GetComponent<RectTransform>();
-        dropdownRect.anchorMin = new Vector2(1.1f, 1.1f); // move off-screen
+        dropdownRect.anchorMin = new Vector2(1.1f, 1.1f);
         dropdownRect.anchorMax = dropdownRect.anchorMin;
         dropdownRect.sizeDelta = Vector2.zero;
         var cg = dropdownObj.AddComponent<CanvasGroup>();
@@ -655,6 +703,8 @@ public class UniformSystemBootstrap : MonoBehaviour
             Debug.Log("[UniformBootstrap] Previous UniformUIScreens removed for rebuild.");
         }
 
+        TeardownPreviewStage();
+
         Debug.Log($"[UniformBootstrap] Creating UI on Canvas: {canvas.name}");
 
         lobbyButtonsShown = false;
@@ -704,9 +754,10 @@ public class UniformSystemBootstrap : MonoBehaviour
         Text toastText;
         Button designBackBtn;
         Dropdown teamDropdown;
+        Button generateBtn;
 
         GameObject designScreen = BuildDesignScreen(root.transform, out inputPrompt, out tilingSlider,
-            out strengthSlider, out spinner, out toastText, out designBackBtn, out teamDropdown);
+            out strengthSlider, out spinner, out toastText, out designBackBtn, out teamDropdown, out generateBtn);
 
         GameObject promptHost = new GameObject("UniformPromptController");
         promptHost.transform.SetParent(designScreen.transform, false);
@@ -719,7 +770,7 @@ public class UniformSystemBootstrap : MonoBehaviour
             SetUIField("teamDropdown", teamDropdown);
             SetUIField("tilingSlider", tilingSlider);
             SetUIField("strengthSlider", strengthSlider);
-            SetUIField("generateBtn", null);
+            SetUIField("generateBtn", generateBtn);
             SetUIField("loadingSpinner", spinner);
             SetUIField("toastText", toastText);
             SetUIField("bridge", bridge);
@@ -736,10 +787,274 @@ public class UniformSystemBootstrap : MonoBehaviour
         screenManager.backFromDesignButton = designBackBtn;
         screenManager.promptUI = promptUI;
 
+        UniformUIScreenManager.OnScreenStateChanged -= HandleScreenStateChanged;
+        UniformUIScreenManager.OnScreenStateChanged += HandleScreenStateChanged;
+
         if (Application.isPlaying)
         {
             screenManager.Initialize();
         }
+
+        HandleScreenStateChanged(screenManager.CurrentState);
+    }
+
+    void EnsurePreviewStage()
+    {
+        int layer = ResolvePreviewLayer();
+
+        if (previewStage == null)
+        {
+            previewStage = new GameObject("UniformPreviewStage");
+            previewStage.transform.position = previewStageOrigin;
+        }
+
+        if (previewTexture == null)
+        {
+            previewTexture = new RenderTexture(960, 960, 16, RenderTextureFormat.ARGB32)
+            {
+                name = "UniformPreviewRT"
+            };
+        }
+
+        if (previewCamera == null)
+        {
+            GameObject camObj = new GameObject("UniformPreviewCamera");
+            camObj.transform.SetParent(previewStage.transform, false);
+            previewCamera = camObj.AddComponent<Camera>();
+            previewCamera.clearFlags = CameraClearFlags.SolidColor;
+            previewCamera.backgroundColor = new Color(0.02f, 0.04f, 0.1f, 1f);
+            previewCamera.cullingMask = 1 << layer;
+            previewCamera.nearClipPlane = 0.05f;
+            previewCamera.farClipPlane = 10f;
+            previewCamera.fieldOfView = 24f;
+            previewCamera.targetTexture = previewTexture;
+            camObj.SetActive(false);
+        }
+
+        if (previewLight == null)
+        {
+            GameObject lightObj = new GameObject("PreviewLight");
+            lightObj.transform.SetParent(previewStage.transform, false);
+            lightObj.transform.localRotation = Quaternion.Euler(30f, 140f, 0f);
+            previewLight = lightObj.AddComponent<Light>();
+            previewLight.type = LightType.Directional;
+            previewLight.intensity = 1.25f;
+            previewLight.color = new Color(1f, 0.96f, 0.9f, 1f);
+        }
+
+        EnsurePreviewFloor(layer);
+        BuildPreviewCharacter();
+        PositionPreviewCamera();
+        SetLayerRecursively(previewStage, layer);
+    }
+
+    void EnsurePreviewFloor(int layer)
+    {
+        if (previewStage == null) return;
+
+        Transform floor = previewStage.transform.Find("PreviewFloor");
+        if (floor == null)
+        {
+            GameObject floorObj = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            floorObj.name = "PreviewFloor";
+            floorObj.transform.SetParent(previewStage.transform, false);
+            floorObj.transform.localScale = Vector3.one * 0.18f;
+
+            var rend = floorObj.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                rend.sharedMaterial.color = new Color(0.05f, 0.08f, 0.16f, 1f);
+            }
+
+            var col = floorObj.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(col);
+                else
+                    DestroyImmediate(col);
+            }
+
+            floor = floorObj.transform;
+        }
+
+        SetLayerRecursively(floor.gameObject, layer);
+    }
+
+    void BuildPreviewCharacter()
+    {
+        if (previewStage == null) return;
+
+        if (previewCharacter != null)
+        {
+            SafeDestroy(previewCharacter);
+            previewCharacter = null;
+        }
+
+        Transform source = GetPreviewSourceRoot();
+        if (source == null)
+        {
+            Debug.LogWarning("[UniformBootstrap] Preview source character not found.");
+            return;
+        }
+
+        previewCharacter = Instantiate(source.gameObject, previewStage.transform, false);
+        previewCharacter.name = "UniformPreviewCharacter";
+        previewCharacter.transform.localPosition = Vector3.zero;
+        previewCharacter.transform.localRotation = Quaternion.Euler(0f, 200f, 0f);
+        previewCharacter.transform.localScale = source.localScale * 1.6f;
+
+        foreach (var behaviour in previewCharacter.GetComponentsInChildren<Behaviour>(true))
+        {
+            if (behaviour is Animator anim)
+            {
+                anim.speed = 0f;
+                continue;
+            }
+
+            behaviour.enabled = false;
+        }
+
+        foreach (var rb in previewCharacter.GetComponentsInChildren<Rigidbody>(true))
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        foreach (var col in previewCharacter.GetComponentsInChildren<Collider>(true))
+        {
+            col.enabled = false;
+        }
+
+        SetLayerRecursively(previewCharacter, ResolvePreviewLayer());
+    }
+
+    void PositionPreviewCamera()
+    {
+        if (previewCamera == null || previewStage == null) return;
+
+        previewCamera.transform.SetParent(previewStage.transform, false);
+        Vector3 focusLocal = new Vector3(0f, 1.1f, 0f);
+        float radius = 1.4f;
+
+        if (previewCharacter != null)
+        {
+            var renderers = previewCharacter.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length > 0)
+            {
+                Bounds b = new Bounds(renderers[0].bounds.center, renderers[0].bounds.size);
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    b.Encapsulate(renderers[i].bounds);
+                }
+
+                focusLocal = previewStage.transform.InverseTransformPoint(b.center);
+                focusLocal.y = Mathf.Max(1.05f, focusLocal.y);
+                radius = Mathf.Max(0.6f, b.extents.magnitude);
+            }
+        }
+
+        float fovRad = previewCamera.fieldOfView * Mathf.Deg2Rad;
+        float distance = radius / Mathf.Tan(fovRad * 0.55f) + 0.35f;
+        Vector3 viewDir = new Vector3(0f, 0.12f, -1f).normalized;
+
+        previewCamera.transform.localPosition = focusLocal + viewDir * distance;
+        previewCamera.transform.LookAt(previewStage.transform.TransformPoint(focusLocal + new Vector3(0f, 0.2f, 0f)));
+    }
+
+    Transform GetPreviewSourceRoot()
+    {
+        if (blueRoots != null)
+        {
+            foreach (var t in blueRoots)
+            {
+                if (t != null) return t;
+            }
+        }
+
+        if (purpleRoots != null)
+        {
+            foreach (var t in purpleRoots)
+            {
+                if (t != null) return t;
+            }
+        }
+
+        var env = FindFirstObjectByType<SoccerEnvController>();
+        if (env != null && env.AgentsList.Count > 0 && env.AgentsList[0].Agent != null)
+        {
+            return env.AgentsList[0].Agent.transform;
+        }
+
+        return null;
+    }
+
+    int ResolvePreviewLayer()
+    {
+        if (previewLayer >= 0) return previewLayer;
+        previewLayer = LayerMask.NameToLayer("Preview");
+        if (previewLayer < 0) previewLayer = 30;
+        return previewLayer;
+    }
+
+    void SetLayerRecursively(GameObject obj, int layer)
+    {
+        if (obj == null || layer < 0) return;
+        obj.layer = layer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, layer);
+        }
+    }
+
+    void TeardownPreviewStage()
+    {
+        if (previewCamera != null)
+        {
+            previewCamera.targetTexture = null;
+        }
+
+        SafeDestroy(previewCharacter);
+        previewCharacter = null;
+
+        if (previewTexture != null)
+        {
+            previewTexture.Release();
+            SafeDestroy(previewTexture);
+            previewTexture = null;
+        }
+
+        SafeDestroy(previewStage);
+        previewStage = null;
+        previewLight = null;
+        previewCamera = null;
+    }
+
+    void HandleScreenStateChanged(UniformUIScreenManager.ScreenState state)
+    {
+        bool designActive = state == UniformUIScreenManager.ScreenState.Design;
+        if (previewStage != null)
+        {
+            previewStage.SetActive(designActive);
+        }
+
+        if (previewCamera != null)
+        {
+            previewCamera.gameObject.SetActive(designActive);
+            if (designActive)
+            {
+                previewCamera.targetTexture = previewTexture;
+            }
+        }
+    }
+
+    void SafeDestroy(UnityEngine.Object obj)
+    {
+        if (obj == null) return;
+        if (Application.isPlaying)
+            Destroy(obj);
+        else
+            DestroyImmediate(obj);
     }
 
     void SetUIField(string fieldName, object value)
@@ -801,7 +1116,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         rect.sizeDelta = new Vector2(0, 35);
 
         Image img = obj.AddComponent<Image>();
-        img.color = new Color(0.35f, 0.53f, 0.92f, 0.95f);
+        img.color = new Color(0.12f, 0.18f, 0.34f, 0.95f);
 
         InputField input = obj.AddComponent<InputField>();
 
@@ -810,7 +1125,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         textObj.transform.SetParent(obj.transform, false);
         Text txt = textObj.AddComponent<Text>();
         txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        txt.color = Color.white;
+        txt.color = new Color(0.92f, 0.96f, 1f, 1f);
         txt.fontSize = 20;
         txt.supportRichText = false;
 
@@ -826,7 +1141,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         Text placeholderTxt = placeholderObj.AddComponent<Text>();
         placeholderTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         placeholderTxt.text = placeholder;
-        placeholderTxt.color = new Color(0.8f, 0.85f, 1f, 0.95f);
+        placeholderTxt.color = new Color(0.7f, 0.78f, 1f, 0.85f);
         placeholderTxt.fontSize = 20;
         placeholderTxt.fontStyle = FontStyle.Italic;
 
@@ -1016,7 +1331,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         Text labelTxt = labelObj.AddComponent<Text>();
         labelTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         labelTxt.text = label;
-        labelTxt.color = Color.black;
+        labelTxt.color = new Color(0.86f, 0.93f, 1f, 1f);
         labelTxt.fontSize = 20;
         labelTxt.alignment = TextAnchor.MiddleLeft;
 
@@ -1041,7 +1356,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         bgRect.offsetMax = Vector2.zero;
 
         Image bgImg = bgObj.AddComponent<Image>();
-        bgImg.color = new Color(0.92f, 0.93f, 0.96f, 1f);
+        bgImg.color = new Color(0.1f, 0.14f, 0.26f, 1f);
 
         GameObject fillObj = new GameObject("Fill");
         fillObj.transform.SetParent(bgObj.transform, false);
@@ -1052,7 +1367,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         fillRect.offsetMax = Vector2.zero;
 
         Image fillImg = fillObj.AddComponent<Image>();
-        fillImg.color = new Color(0.35f, 0.52f, 0.92f, 1f);
+        fillImg.color = new Color(0.25f, 0.62f, 0.98f, 1f);
 
         GameObject handleObj = new GameObject("Handle");
         handleObj.transform.SetParent(sliderObj.transform, false);
@@ -1063,7 +1378,7 @@ public class UniformSystemBootstrap : MonoBehaviour
         handleRect.anchoredPosition = Vector2.zero;
 
         Image handleImg = handleObj.AddComponent<Image>();
-        handleImg.color = Color.white;
+        handleImg.color = new Color(0.9f, 0.96f, 1f, 1f);
 
         slider.fillRect = fillRect;
         slider.handleRect = handleRect;

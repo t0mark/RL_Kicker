@@ -12,14 +12,17 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ALPHABLEND_ON
+  - _ALPHAPREMULTIPLY_ON
   - _EMISSION
+  - _GLOSSYREFLECTIONS_OFF
+  - _SPECULARHIGHLIGHTS_OFF
   m_InvalidKeywords: []
-  m_LightmapFlags: 5
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Transparent
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
@@ -80,7 +83,7 @@ Material:
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 0
-    - _SrcBlend: 5
+    - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 0
     m_Colors:
